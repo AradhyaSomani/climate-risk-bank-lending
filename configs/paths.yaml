@@ -1,0 +1,22 @@
+# Where every stage reads and writes. Paths are relative to the repo root.
+raw: data/raw
+interim: data/interim
+processed: data/processed
+events: data/events
+runs: data/processed/run_log.csv
+
+raw_layers:
+  gfd: data/raw/gfd
+  imd: data/raw/imd
+  districts: data/raw/districts
+  jrc_gsw: data/raw/jrc_gsw
+  dem: data/raw/dem
+  worldcover: data/raw/worldcover
+  emdat: data/raw/emdat
+  sentinel1: data/raw/sentinel1
+  s1_labels: data/raw/s1_labels
+
+# Geometry used until B's district_master.parquet (contract C1) exists.
+district_geometry:
+  preferred: data/processed/district_master.parquet
+  fallback: data/raw/districts/2011_Dist.shp
