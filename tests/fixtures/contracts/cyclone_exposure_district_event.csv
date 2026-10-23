@@ -1,0 +1,4 @@
+event_id,district_id,track_dist_km,closest_time,wind_kt_closest,grade_closest,landfall_time,within_radius,data_version
+CY-2019-FANI,345,0.0,2019-05-03T03:00:00Z,115,ESCS,2019-05-03T03:00:00Z,true,toy
+CY-2019-FANI,346,42.0,2019-05-03T06:00:00Z,100,ESCS,2019-05-03T03:00:00Z,true,toy
+CY-2019-FANI,350,260.0,2019-05-03T12:00:00Z,60,SCS,2019-05-03T03:00:00Z,false,toy

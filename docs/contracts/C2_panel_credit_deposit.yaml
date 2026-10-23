@@ -1,0 +1,21 @@
+contract: C2
+producer: B
+consumer: A
+description: >
+  District-quarter credit and deposit panel on 2011 boundaries after crosswalk weights.
+  Amounts in rupees crore, nominal. quarter_end is the last calendar day of the quarter.
+tables:
+  panel_credit_deposit:
+    file: data/processed/panel_credit_deposit.parquet
+    sample: tests/fixtures/contracts/panel_credit_deposit.csv
+    primary_key: [district_id, quarter_end, bank_group, measure, sector]
+    columns:
+      district_id: {dtype: int}
+      quarter_end: {dtype: date, quarter_end: true}
+      bank_group: {dtype: str, allowed: [all, public, private, foreign, rrb, sfb]}
+      measure: {dtype: str, allowed: [credit, deposits]}
+      sector: {dtype: str, allowed: [all, agriculture, industry, services, personal, other]}
+      amount_cr: {dtype: float, min: 0, nullable: true, description: rupees crore, nominal}
+      series_break: {dtype: bool}
+      split_flag: {dtype: bool}
+      data_version: {dtype: str}

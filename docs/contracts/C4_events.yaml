@@ -1,0 +1,38 @@
+contract: C4
+producer: A
+consumer: B
+description: >
+  Event catalogue and per-district treatment flags. Treatment and exclusion rules live in
+  configs/events.yaml and are fixed before outcomes are examined.
+tables:
+  events:
+    file: data/processed/events.parquet
+    sample: tests/fixtures/contracts/events.csv
+    primary_key: [event_id]
+    columns:
+      event_id: {dtype: str}
+      hazard_type: {dtype: str, allowed: [flood, cyclone]}
+      name: {dtype: str}
+      start_date: {dtype: date}
+      end_date: {dtype: date, nullable: true}
+      impact_quarter: {dtype: date, quarter_end: true, description: quarter-end date of the impact quarter}
+      states: {dtype: str, description: semicolon-separated state names}
+      source: {dtype: str}
+      emdat_id: {dtype: str, nullable: true}
+  event_district:
+    file: data/processed/event_district.parquet
+    sample: tests/fixtures/contracts/event_district.csv
+    primary_key: [event_id, district_id]
+    columns:
+      event_id: {dtype: str}
+      district_id: {dtype: int}
+      flooded_share: {dtype: float, min: 0, max: 1, nullable: true}
+      flooded_built_share: {dtype: float, min: 0, max: 1, nullable: true}
+      track_dist_km: {dtype: float, min: 0, nullable: true}
+      max_wind_kt: {dtype: float, min: 0, nullable: true}
+      treated: {dtype: bool}
+      heavily_treated: {dtype: bool}
+      excluded: {dtype: bool, description: in the exclusion zone; kept out of the main control pool}
+    checks:
+      - {kind: implies, if: heavily_treated, then: treated}
+      - {kind: not_both, columns: [treated, excluded]}

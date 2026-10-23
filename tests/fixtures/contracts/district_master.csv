@@ -1,0 +1,4 @@
+district_id,name,state,population,area_km2,urban_share,geometry
+595,Ernakulam,Kerala,3282388,3068.0,0.68,"MULTIPOLYGON (((76.2 9.8, 76.8 9.8, 76.8 10.3, 76.2 10.3, 76.2 9.8)))"
+598,Alappuzha,Kerala,2127789,1414.0,0.54,"MULTIPOLYGON (((76.25 9.1, 76.55 9.1, 76.55 9.8, 76.25 9.8, 76.25 9.1)))"
+599,Pathanamthitta,Kerala,1197412,2652.0,0.11,"MULTIPOLYGON (((76.55 9.1, 77.2 9.1, 77.2 9.5, 76.55 9.5, 76.55 9.1)))"

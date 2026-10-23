@@ -1,0 +1,5 @@
+event_id,district_id,flooded_share,flooded_built_share,track_dist_km,max_wind_kt,treated,heavily_treated,excluded
+FL-2018-KER,598,0.2843,0.31,,,true,true,false
+FL-2018-KER,595,0.0686,0.05,,,true,false,false
+FL-2018-KER,599,0.0358,,,,false,false,true
+CY-2019-FANI,345,,,0.0,115,true,true,false
