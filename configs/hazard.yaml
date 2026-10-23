@@ -43,3 +43,13 @@ score:
   # tier cut-offs on the within-India percentile of the score: below 0.50 = 1 (low),
   # 0.50-0.75 = 2 (medium), 0.75-0.90 = 3 (high), 0.90 and above = 4 (very high)
   tier_cutoffs: [0.50, 0.75, 0.90]
+validation:
+  # Phase 2C. Out-of-sample: build the score from events before the cut-off year, test it
+  # on districts hit from that year on.
+  flood_cutoff_year: 2012     # GFD 2000-2011 to build, 2012-2018 to test
+  cyclone_cutoff_year: 2005   # IMD 1982-2004 to build, 2005 onwards to test
+  top_tier: 3                 # "high" and above, for precision and recall
+  # Kerala August 2018: the seven worst-hit districts named in the Government of Kerala
+  # Post Disaster Needs Assessment (Oct 2018, p. 13). Census 2011 codes.
+  kerala_2018_worst: [594, 595, 596, 597, 598, 599, 590]  # Thrissur Ernakulam Idukki Kottayam Alappuzha Pathanamthitta Wayanad
+  kerala_state: Kerala
