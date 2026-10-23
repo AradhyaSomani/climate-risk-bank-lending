@@ -19,6 +19,21 @@ make lint
 
 Optional extras: `.[gee]` for Earth Engine pulls, `.[ml]` for the models in `src/cri/ml`, `.[db]` for the PostGIS loader.
 
+## Pipeline
+
+```bash
+make data      # B: district master, crosswalk, RBI panel, controls
+make hazard    # A: flood extent, cyclone footprints, hazard baseline, scores
+make events    # event catalogue and treatment flags, then the event study
+make stress    # scenarios and the stress test
+```
+
+Settings live in `configs/*.yaml` (`paths`, `project`, `hazard`, ...). Every step appends a row
+to `data/processed/run_log.csv` with the git commit, data version and a hash of the configs,
+so any table can be traced to the code that made it. `python -m cri.pipeline <stage> --list`
+shows the steps registered so far. Data is versioned with DVC; set the shared remote once
+with `make dvc-remote URL=...`.
+
 ## Layout
 
 ```text

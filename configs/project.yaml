@@ -1,0 +1,17 @@
+# Conventions shared by every stage.
+study_period:
+  start: 2000-01-01
+  end: 2026-06-30          # last quarter end to use; move forward as RBI releases arrive
+units:
+  money: rupees crore
+  area: km2
+  distance: km
+  wind: knots
+dates:
+  quarter_end: true        # every quarterly date is the last calendar day of the quarter
+crs:
+  geographic: EPSG:4326
+  metric: EPSG:7755        # WGS 84 / India NSF LCC (conformal): distances in km
+  # Albers equal-area for India, used for every area computation
+  equal_area: "+proj=aea +lat_0=20 +lon_0=78 +lat_1=12 +lat_2=28 +datum=WGS84 +units=m +no_defs"
+data_version: dev          # set to data-v1 when Phase 1 is tagged
