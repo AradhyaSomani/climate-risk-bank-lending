@@ -31,7 +31,7 @@ tables:
       track_dist_km: {dtype: float, min: 0, description: distance from district polygon to track}
       closest_time: {dtype: datetime, description: UTC time of closest approach}
       wind_kt_closest: {dtype: float, min: 0, description: track max sustained wind at closest approach}
-      grade_closest: {dtype: str, allowed: [D, DD, CS, SCS, VSCS, ESCS, SuCS]}
+      grade_closest: {dtype: str, allowed: [L, D, DD, CS, SCS, VSCS, ESCS, SuCS], description: IMD grade from the interpolated wind; L is below depression}
       landfall_time: {dtype: datetime, nullable: true}
       within_radius: {dtype: bool, description: track_dist_km <= configured radius and grade >= configured minimum}
       data_version: {dtype: str}
