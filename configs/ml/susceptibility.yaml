@@ -1,0 +1,19 @@
+# Phase 2B-C flood susceptibility. Placeholders until the first full run.
+grid_deg: 0.05                     # about 5 km cells; features averaged from the 500 m layers
+target: gfd_flooded_any            # cell flooded in at least one GFD event (a weak label)
+features: [elev_m, slope_deg, rel_elev_m, perm_water_share, lowlying_share,
+           dist_coast_km, dist_river_km, built_share, crop_share]
+cv:
+  scheme: block                    # spatial blocks, never random cells
+  block_deg: 2.0
+  folds: 5
+  seed: 42
+model:
+  learning_rate: 0.05
+  n_estimators: 400
+  num_leaves: 31
+  min_child_samples: 50
+gate:
+  metric: auc_block_cv
+  baseline: event_count_neighbours # flood count of the block's training cells nearby
+  margin: 0.0
