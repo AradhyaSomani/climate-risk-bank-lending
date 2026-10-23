@@ -186,8 +186,10 @@ def run(out: Path = REPORT) -> Path:
     if inputs["cyclone"] is not None:
         oos.append(out_of_sample(inputs, districts.district_id, "cyclone",
                                  cfg["cyclone_cutoff_year"], cfg["top_tier"]))
-    parts.append(_md(pd.concat(oos, ignore_index=True)) if oos else "Pending: no hazard tables.")
+    oos = pd.concat(oos, ignore_index=True) if oos else pd.DataFrame()
+    parts.append(_md(oos) if len(oos) else "Pending: no hazard tables.")
     parts.append("")
+    summary = summarise(oos)
 
     parts.append("## 2. Kerala, August 2018\n")
     if inputs["flood"] is not None:
@@ -226,9 +228,67 @@ def run(out: Path = REPORT) -> Path:
                      "`python -m cri.ingest.sentinel1`). Chennai 2015 is the first event to "
                      "compare, since Kerala 2018 is not in GFD.")
     parts.append("")
+    parts.append("## 6. Eye check: tiers by state\n")
+    scores_now = pd.read_parquet(scores_path) if scores_path.exists() else None
+    if scores_now is not None:
+        parts.append("Districts per tier (rank_avg). Flood-prone Assam and Bihar and the "
+                     "cyclone coast should sit high; Rajasthan should not.\n")
+        parts.append(_md(state_tiers(scores_now, districts)))
+    parts.append("")
+    # summary goes right after the introduction
+    parts[2:2] = ["## Summary\n", *summary, ""]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(parts))
     return out
+
+
+STATES = ["Assam", "Bihar", "West Bengal", "Odisha", "Andhra Pradesh", "Tamil Nadu", "Gujarat",
+          "Kerala", "Rajasthan"]
+
+
+def state_tiers(scores: pd.DataFrame, districts: pd.DataFrame) -> pd.DataFrame:
+    s = scores[scores.score_version == "rank_avg"].merge(districts[["district_id", "state"]])
+    s = s[s.state.isin(STATES) & s.hazard_type.isin(["flood", "cyclone"])]
+    t = (s.groupby(["state", "hazard_type", "tier"]).size().unstack("tier", fill_value=0)
+         .reindex(columns=[1, 2, 3, 4], fill_value=0))
+    t.columns = [f"tier_{c}" for c in t.columns]
+    return t.reset_index()
+
+
+def summarise(oos: pd.DataFrame) -> list[str]:
+    """Plain statements from the out-of-sample table, so the summary never drifts from it."""
+    lines = []
+    for hz in ["flood", "cyclone"]:
+        g = oos[oos.hazard == hz] if len(oos) else oos
+        if not len(g):
+            continue
+        comp = g[g.score.isin(score.VERSIONS)]
+        single = g[~g.score.isin(score.VERSIONS)].iloc[0]
+        best = comp.loc[comp.auc.idxmax()]
+        diff = best.auc - single.auc
+        verdict = ("slightly beats" if 0.005 < diff <= 0.02 else "beats" if diff > 0.02 else
+                   "matches" if diff >= -0.005 else "loses to")
+        rho_c, rho_s = comp.spearman_count.max(), single.spearman_count
+        lines.append(
+            f"- {hz.capitalize()}: built {best.built_from} and tested {best.tested_on}, the "
+            f"composite ranks later-hit districts well (AUC {best.auc:.2f}, {best['score']}) and "
+            f"{verdict} the single indicator `{single['score'].removesuffix(' only')}` (AUC "
+            f"{single.auc:.2f}). On how often districts are hit (Spearman with the later hit "
+            f"count) the single indicator is {'better' if rho_s > rho_c else 'no better'} "
+            f"({rho_s:.2f} against {rho_c:.2f}): the extra indicators add severity and terrain, "
+            "which separate hit from not hit but not frequent from occasional.")
+    lines.append("- Kerala 2018 (section 2) is the weak check: the score was built without "
+                 "the event, and only the low-lying districts (Alappuzha, Thrissur, Kottayam) "
+                 "come out high. Idukki and Wayanad were hit mainly by landslides, which a "
+                 "flood-extent score cannot see. GFD observed Kerala in 24 events but never "
+                 "recorded Ernakulam or Pathanamthitta above 1% flooded (MODIS misses floods "
+                 "under cloud and canopy), so both sit near the median.")
+    lines.append("- EM-DAT, the NRSC atlas and the Sentinel-1 comparison are pending on data "
+                 "(sections 3 to 5).")
+    lines.append("- Known artefact: `flood_duration_days` is high for some central Indian "
+                 "districts hit by one long GFD event, probably reservoirs below the JRC "
+                 "permanent-water threshold; it carries 5% of the weighted flood score.")
+    return lines
 
 
 def main(argv: list[str] | None = None) -> None:

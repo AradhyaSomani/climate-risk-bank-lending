@@ -46,3 +46,13 @@ def test_gfd_vs_s1_compares_only_shared_events():
     out = val.gfd_vs_s1(flood)
     assert out.event_id.tolist() == ["E1"]
     assert out.iloc[0].hit_iou == 1.0 and out.iloc[0].n_districts == 3
+
+
+def test_summary_states_the_comparison():
+    oos = pd.DataFrame({
+        "hazard": "flood", "built_from": "before 2012", "tested_on": "2012 on",
+        "score": ["rank_avg", "weighted", "pca", "flood_events_per_decade only"],
+        "auc": [0.80, 0.81, 0.79, 0.85], "spearman_count": [0.5, 0.6, 0.5, 0.7],
+    })
+    text = val.summarise(oos)[0]
+    assert "loses to" in text and "0.85" in text and "better (0.70 against 0.60)" in text
