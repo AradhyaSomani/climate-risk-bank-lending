@@ -14,3 +14,8 @@ cyclone:
   densify_minutes: 30        # interpolate fixes to this step before measuring distance
   max_report_km: 500         # keep district rows up to this distance from the track
   landfall_exclude_states: [Andaman & Nicobar Island, Lakshadweep]
+  coastal_within_km: 5       # a landfall district must lie within this distance of the sea
+baseline:
+  grid_deg: 0.005            # India grid for JRC and DEM sampling (about 500 m)
+  perm_water_occurrence: 90  # JRC occurrence (% of observations wet) counted as permanent
+  lowlying_m: 10             # elevation below this counts as low-lying land
