@@ -1,0 +1,47 @@
+contract: C3
+producer: A
+consumer: B
+description: >
+  Per-event hazard footprints by 2011 district (flood extent, cyclone exposure) and the
+  district hazard scores with tiers. Tier 1 = low, 4 = very high.
+tables:
+  flood_extent_district_event:
+    file: data/processed/flood_extent_district_event.parquet
+    sample: tests/fixtures/contracts/flood_extent_district_event.csv
+    primary_key: [event_id, district_id, source]
+    columns:
+      event_id: {dtype: str}
+      district_id: {dtype: int}
+      source: {dtype: str, allowed: [gfd, s1_unet, s1_otsu]}
+      flooded_km2: {dtype: float, min: 0}
+      flooded_share: {dtype: float, min: 0, max: 1, description: flooded area / district land area}
+      flooded_built_share: {dtype: float, min: 0, max: 1, nullable: true}
+      flooded_crop_share: {dtype: float, min: 0, max: 1, nullable: true}
+      duration_days: {dtype: float, min: 0, nullable: true, description: mean over flooded pixels}
+      clear_view_share: {dtype: float, min: 0, max: 1, nullable: true, description: share of district with cloud-free observations}
+      data_version: {dtype: str}
+  cyclone_exposure_district_event:
+    file: data/processed/cyclone_exposure_district_event.parquet
+    sample: tests/fixtures/contracts/cyclone_exposure_district_event.csv
+    primary_key: [event_id, district_id]
+    columns:
+      event_id: {dtype: str}
+      district_id: {dtype: int}
+      track_dist_km: {dtype: float, min: 0, description: distance from district polygon to track}
+      closest_time: {dtype: datetime, description: UTC time of closest approach}
+      wind_kt_closest: {dtype: float, min: 0, description: track max sustained wind at closest approach}
+      grade_closest: {dtype: str, allowed: [D, DD, CS, SCS, VSCS, ESCS, SuCS]}
+      landfall_time: {dtype: datetime, nullable: true}
+      within_radius: {dtype: bool, description: track_dist_km <= configured radius and grade >= configured minimum}
+      data_version: {dtype: str}
+  hazard_scores:
+    file: data/processed/hazard_scores.parquet
+    sample: tests/fixtures/contracts/hazard_scores.csv
+    primary_key: [district_id, score_version, hazard_type]
+    columns:
+      district_id: {dtype: int}
+      score_version: {dtype: str, allowed: [rank_avg, weighted, pca, susceptibility]}
+      hazard_type: {dtype: str, allowed: [flood, cyclone, combined]}
+      score: {dtype: float}
+      tier: {dtype: int, min: 1, max: 4}
+      data_version: {dtype: str}

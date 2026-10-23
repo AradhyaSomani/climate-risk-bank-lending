@@ -1,0 +1,6 @@
+district_id,quarter_end,bank_group,measure,sector,amount_cr,series_break,split_flag,data_version
+595,2018-06-30,all,credit,all,85000.0,false,false,toy
+595,2018-06-30,all,deposits,all,98000.0,false,false,toy
+595,2018-09-30,all,credit,all,86200.0,false,false,toy
+598,2018-06-30,public,credit,agriculture,3100.0,false,false,toy
+598,2018-09-30,public,credit,agriculture,3050.0,false,false,toy
