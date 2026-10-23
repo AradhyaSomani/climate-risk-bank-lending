@@ -1,6 +1,7 @@
 PY ?= python
+DATABASE_URL ?= postgresql://postgres@localhost:5432/cri
 
-.PHONY: install lint test contracts ci data hazard events stress all dvc-remote
+.PHONY: install lint test contracts ci data hazard events stress all dvc-remote db
 
 install:
 	$(PY) -m pip install -e ".[geo,api,dev]"
@@ -34,3 +35,6 @@ all: stress
 # One shared DVC remote for both people, e.g. make dvc-remote URL=gdrive://<folder-id>
 dvc-remote:
 	dvc remote add -d -f storage $(URL)
+
+db:
+	DATABASE_URL=$(DATABASE_URL) $(PY) scripts/load_db.py
