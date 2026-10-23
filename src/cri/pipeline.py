@@ -24,6 +24,7 @@ STAGES: dict[str, list[str]] = {
         "cri.hazard.flood_extent:build_gfd",
         "cri.hazard.cyclone_footprint:build",
         "cri.ingest.emdat:build_default",
+        "cri.hazard.baseline:build",
     ],
     "events": [],
     "stress": [],

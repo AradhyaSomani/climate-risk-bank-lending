@@ -23,6 +23,7 @@ import shapely
 
 from cri import config, contracts
 from cri.geo.districts import load_districts
+from cri.geo.land import coastal_mask, foreign_land
 from cri.ingest.imd_tracks import grade_from_wind, grade_rank, load_tracks
 
 log = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ def storm_footprint(
     india_m,
     minutes: int,
     max_report_km: float,
+    foreign_m=None,
 ) -> tuple[pd.DataFrame, dict]:
     """District rows for one storm plus a storm summary (landfall time and district)."""
     track = track.dropna(subset=["wind_kt"])
@@ -65,12 +67,20 @@ def storm_footprint(
 
     on_land = shapely.contains_xy(india_m, geo.x.to_numpy(), geo.y.to_numpy())
     landfall_time, landfall_district = pd.NaT, None
-    crossing = np.flatnonzero(on_land[1:] & ~on_land[:-1])
+    from_sea = ~on_land[:-1]
+    if foreign_m is not None:
+        # entering India overland (e.g. from Bangladesh) is not a landfall in India
+        from_sea &= ~shapely.contains_xy(foreign_m, geo.x.to_numpy()[:-1], geo.y.to_numpy()[:-1])
+    crossing = np.flatnonzero(on_land[1:] & from_sea)
     if len(crossing):
         k = crossing[0] + 1
         landfall_time = pts.time.iloc[k]
         hit = districts_m.sindex.query(p[k], predicate="intersects")
         hit = [h for h in hit if districts_m.state.iloc[h] not in excluded]
+        if "coastal" in districts_m and len(hit) and not districts_m.coastal.iloc[hit[0]]:
+            # first Indian district is inland: the storm crossed the coast of another
+            # country (coarse old fixes can hide that between two points)
+            hit, landfall_time = [], pd.NaT
         if len(hit):
             landfall_district = int(districts_m.district_id.iloc[hit[0]])
 
@@ -127,12 +137,16 @@ def build(storm_ids: list[str] | None = None) -> list[Path]:
     india_m = shapely.union_all(districts_m.geometry[mainland].to_numpy())
     india_m = shapely.simplify(india_m, 500)  # 0.5 km tolerance is ample for landfall
     shapely.prepare(india_m)
+    districts_m["coastal"] = coastal_mask(districts_m, hz["coastal_within_km"])
+    foreign_m = foreign_land(shapely.union_all(districts_m.geometry.to_numpy()), districts_m.crs)
+    foreign_m = shapely.simplify(foreign_m, 500)
+    shapely.prepare(foreign_m)
 
     parts, summaries = [], []
     for sid in storms.index:
         rows, summary = storm_footprint(
             tracks[tracks.storm_id == sid], districts_m, india_m,
-            hz["densify_minutes"], hz["max_report_km"],
+            hz["densify_minutes"], hz["max_report_km"], foreign_m,
         )
         summaries.append({"event_id": imd_event_id(sid), "storm_id": sid, **summary})
         if rows.empty:
