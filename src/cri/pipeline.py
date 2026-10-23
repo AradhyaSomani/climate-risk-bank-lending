@@ -26,6 +26,7 @@ STAGES: dict[str, list[str]] = {
         "cri.ingest.emdat:build_default",
         "cri.hazard.baseline:build",
         "cri.hazard.indicators:build",
+        "cri.hazard.score:build",
     ],
     "events": [],
     "stress": [],
