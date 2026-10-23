@@ -1,0 +1,4 @@
+district_id,flood_events_hit,flood_events_per_decade,flood_mean_share,flood_max_share,flood_built_share,flood_crop_share,flood_duration_days,flood_events_mapped,gfd_record_years,cyclone_storms_within,cyclone_storms_per_decade,cyclone_max_wind_kt,cyclone_max_grade,cyclone_max_grade_rank,cyclone_landfalls_per_decade,imd_record_years,perm_water_share,lowlying_share,rel_elev_median_m,slope_mean_deg,data_version
+595,2,1.06,0.04,0.06,0.01,0.03,3.0,20,18.81,0,0.0,30.0,DD,3,0.0,43.7,0.05,0.31,12.0,4.2,toy
+598,4,2.13,0.12,0.25,0.02,0.15,5.5,22,18.81,0,0.0,0.0,,0,0.0,43.7,0.18,0.92,1.5,0.4,toy
+387,1,0.53,0.03,0.03,0.0,0.02,2.0,25,18.81,9,2.06,115.0,ESCS,7,0.46,43.7,0.06,0.48,4.0,0.6,toy

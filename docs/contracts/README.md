@@ -8,7 +8,7 @@ stub before the real data exists.
 | --- | --- | --- | --- |
 | [C1](C1_district_master.yaml) | B | A | `district_master`, `crosswalk_rbi_to_c2011` |
 | [C2](C2_panel_credit_deposit.yaml) | B | A | `panel_credit_deposit` |
-| [C3](C3_hazard_tables.yaml) | A | B | `flood_extent_district_event`, `cyclone_exposure_district_event`, `hazard_scores` |
+| [C3](C3_hazard_tables.yaml) | A | B | `flood_extent_district_event`, `cyclone_exposure_district_event`, `hazard_indicators`, `hazard_scores` |
 | [C4](C4_events.yaml) | A | B | `events`, `event_district` |
 | [C5](C5_results.yaml) | B | A | `effects`, `stress_results` |
 

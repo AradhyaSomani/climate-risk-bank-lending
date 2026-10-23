@@ -2,6 +2,7 @@
 
     python -m cri.hazard.plots cyclone IMD-2019-002 --out docs/figures/cyclone_fani_2019.png
     python -m cri.hazard.plots flood GFD-4309 --out docs/figures/flood_gfd_4309.png
+    python -m cri.hazard.plots indicators all --out docs/figures/hazard_indicators.png
 """
 
 from __future__ import annotations
@@ -69,12 +70,45 @@ def flood_map(event_id: str, out: Path) -> Path:
     return out
 
 
+def indicators_map(out: Path, columns: list[str] | None = None) -> Path:
+    """One small map per Phase 2A indicator, coloured by within-India percentile rank so
+    skewed indicators stay readable."""
+    from cri.hazard.indicators import CYCLONE, FLOOD, TERRAIN
+
+    d = load_districts()
+    ind = pd.read_parquet(config.path("processed") / "hazard_indicators.parquet")
+    cols = [c for c in (columns or FLOOD + CYCLONE + TERRAIN) if c in ind.columns]
+    g = d.merge(ind, on="district_id", how="left")
+    ncol = 4
+    nrow = -(-len(cols) // ncol)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(4 * ncol, 4.4 * nrow))
+    for ax, c in zip(axes.ravel(), cols, strict=False):
+        # low relative elevation and slope mean more flood-prone, so invert those colours
+        cmap = "viridis" if c in ("rel_elev_median_m", "slope_mean_deg") else "viridis_r"
+        g.assign(_r=g[c].rank(pct=True)).plot(ax=ax, column="_r", cmap=cmap, linewidth=0,
+                                               missing_kwds={"color": "#dddddd"})
+        ax.set_title(c, fontsize=9)
+        ax.set_axis_off()
+    for ax in axes.ravel()[len(cols):]:
+        ax.set_axis_off()
+    ver = config.load("project").get("data_version", "dev")
+    fig.suptitle(f"Phase 2A hazard indicators, percentile rank (dark = more hazard; data {ver})",
+                 fontsize=11)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=90, bbox_inches="tight")
+    plt.close(fig)
+    return out
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("kind", choices=["cyclone", "flood"])
-    p.add_argument("event_id")
+    p.add_argument("kind", choices=["cyclone", "flood", "indicators"])
+    p.add_argument("event_id", help="event id, or 'all' for the indicator maps")
     p.add_argument("--out", type=Path, required=True)
     a = p.parse_args(argv)
+    if a.kind == "indicators":
+        print(indicators_map(a.out))
+        return
     fn = cyclone_map if a.kind == "cyclone" else flood_map
     print(fn(a.event_id, a.out))
 
