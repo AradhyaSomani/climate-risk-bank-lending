@@ -12,13 +12,22 @@ times on 2026-10-23 (data version `dev`, IMD workbook 1982-2026 via the imdtrack
 | Phailin 2013 | 2013-10-12 17:00 | Ganjam (388) | near Gopalpur (Ganjam), late evening IST 12 Oct | not re-checked against a document | District yes; time not verified |
 | Vardah 2016 | 2016-12-12 09:00 | Chennai (603) | near Chennai, afternoon IST 12 Dec | not re-checked against a document | District yes; time not verified |
 
-Island territories (Andaman and Nicobar, Lakshadweep) are excluded from the landfall test;
-without that rule Hudhud's and Phailin's "landfall" was their passage over the Andamans.
+Rules added after looking at the first results:
+
+- Island territories (Andaman and Nicobar, Lakshadweep) are excluded from the landfall test;
+  without that rule Hudhud's and Phailin's "landfall" was their passage over the Andamans.
+- A storm entering India over land (from Bangladesh or Myanmar, using Natural Earth land)
+  is not an Indian landfall, and the landfall district must lie within 5 km of the sea.
+  Without this, 18 storms (for example Viyaru 2013 and Midhili 2023, which crossed the
+  Bangladesh coast) were counted as landfalls in Tripura, Mizoram, Meghalaya or Manipur,
+  because their sparse fixes jump from the sea straight into India.
 
 Maps for a visual check: `docs/figures/cyclone_fani_2019.png`, `cyclone_amphan_2020.png`,
 `cyclone_hudhud_2014.png` (districts within 100 km at cyclonic-storm strength or stronger are
 outlined in red).
 
-Whole record: 422 storms with at least two fixes, 211 with a mainland landfall, 890
+Whole record: 422 storms with at least two fixes, 193 with a mainland landfall in India
+(Odisha 65, Andhra Pradesh 44, West Bengal 35, Tamil Nadu 26, Gujarat 14, Maharashtra 4,
+Puducherry 3, counting every grade from depression up), 890
 district-storm pairs within the placeholder radius rule (100 km, grade CS or stronger) across
 99 storms.

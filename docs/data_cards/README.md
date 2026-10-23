@@ -16,6 +16,7 @@ project uses it. Person A's hazard layers are below; RBI and census cards are Pe
 | ESA WorldCover | No (large) | Yes (CC BY 4.0) |
 | EM-DAT | **Never** | Counts and flags only, no row-level copy of EM-DAT fields |
 | DataMeet district boundaries | No (B owns `district_master`) | Yes (CC BY 4.0) |
+| Natural Earth land | No | Yes (public domain) |
 
 Because the GFD licence is non-commercial, any release that includes GFD-derived scores is
 non-commercial too. Code is licensed separately (decided in Phase 5E).
@@ -31,3 +32,4 @@ non-commercial too. Code is licensed separately (decided in Phase 5E).
 | [esa_worldcover.md](esa_worldcover.md) | ESA WorldCover |
 | [emdat.md](emdat.md) | EM-DAT |
 | [district_boundaries.md](district_boundaries.md) | DataMeet Census 2011 districts |
+| [natural_earth.md](natural_earth.md) | Natural Earth 10 m land |

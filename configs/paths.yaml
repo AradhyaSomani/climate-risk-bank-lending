@@ -15,6 +15,7 @@ raw_layers:
   emdat: data/raw/emdat
   sentinel1: data/raw/sentinel1
   s1_labels: data/raw/s1_labels
+  natural_earth: data/raw/natural_earth
 
 # Geometry used until B's district_master.parquet (contract C1) exists.
 district_geometry:
