@@ -21,3 +21,10 @@ raw_layers:
 district_geometry:
   preferred: data/processed/district_master.parquet
   fallback: data/raw/districts/2011_Dist.shp
+
+# Phase 2B models (src/cri/ml)
+ml:
+  mlruns: mlruns                              # local MLflow store (gitignored)
+  jsonl: runs/ml                              # run records when MLflow is not installed
+  model_runs: data/processed/model_runs.parquet
+  models: data/models                         # models that passed their gate (DVC)

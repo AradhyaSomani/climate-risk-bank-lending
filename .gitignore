@@ -18,6 +18,7 @@ venv/
 data/raw/
 data/interim/
 data/processed/
+data/models/
 /runs/
 
 # Secrets and local settings
