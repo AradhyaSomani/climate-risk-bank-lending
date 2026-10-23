@@ -260,12 +260,16 @@ def build(res: float | None = None, with_rasters: bool = True) -> list[Path]:
         fill = ["gfd_events_hit", "gfd_pixel_flood_count", "gfd_events_mapped",
                 "gfd_events_hit_per_decade"]
         out[fill] = out[fill].fillna(0)
+        out[["gfd_events_hit", "gfd_events_mapped"]] = out[
+            ["gfd_events_hit", "gfd_events_mapped"]].astype(int)
     storms_path = processed / "cyclone_storms.parquet"
     if storms_path.exists():
         lf = landfall_frequency(pd.read_parquet(storms_path), hz["cyclone"]["min_grade"])
         out = out.merge(lf, on="district_id", how="left")
         fill = ["landfall_count", "landfall_count_strong", "landfall_strong_per_decade"]
         out[fill] = out[fill].fillna(0)
+        out[["landfall_count", "landfall_count_strong"]] = out[
+            ["landfall_count", "landfall_count_strong"]].astype(int)
     if with_rasters:
         # the raster part takes a while (about 1 GB of tiles); cache it per grid resolution
         cache = config.path("interim") / f"baseline_rasters_{res:g}.parquet"
