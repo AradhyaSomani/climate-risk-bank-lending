@@ -19,3 +19,27 @@ baseline:
   grid_deg: 0.005            # India grid for JRC and DEM sampling (about 500 m)
   perm_water_occurrence: 90  # JRC occurrence (% of observations wet) counted as permanent
   lowlying_m: 10             # elevation below this counts as low-lying land
+score:
+  # Phase 2B composite. Weights are fixed here before any outcome is looked at; change them
+  # only through docs/decision_log.md. Indicators are oriented so that higher = more hazard;
+  # `direction: -1` flips those where a lower value means more hazard.
+  direction: {rel_elev_median_m: -1}
+  weights:
+    flood:
+      flood_events_per_decade: 0.30
+      flood_mean_share: 0.15
+      flood_max_share: 0.10
+      flood_crop_share: 0.10
+      flood_built_share: 0.05
+      flood_duration_days: 0.05
+      lowlying_share: 0.10
+      rel_elev_median_m: 0.10
+      perm_water_share: 0.05
+    cyclone:
+      cyclone_storms_per_decade: 0.40
+      cyclone_max_wind_kt: 0.25
+      cyclone_landfalls_per_decade: 0.25
+      cyclone_max_grade_rank: 0.10
+  # tier cut-offs on the within-India percentile of the score: below 0.50 = 1 (low),
+  # 0.50-0.75 = 2 (medium), 0.75-0.90 = 3 (high), 0.90 and above = 4 (very high)
+  tier_cutoffs: [0.50, 0.75, 0.90]
