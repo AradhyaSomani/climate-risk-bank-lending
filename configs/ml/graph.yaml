@@ -1,0 +1,11 @@
+# Phase 2B-D district graph and spillover models.
+graph:
+  contiguity: queen                # shared boundary or corner
+  snap_m: 200                      # polygons closer than this count as touching (topology gaps)
+  weights: boundary_length         # or "binary"
+models: [h0_no_graph, h1_spatial_lag, h2_graph_conv]
+eval: leave_one_event_out
+gate:
+  metric: rmse_counterfactual
+  baseline: h1_spatial_lag
+  margin: 0.0
