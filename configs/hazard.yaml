@@ -12,4 +12,5 @@ cyclone:
   radius_km: 100             # district counted as exposed within this distance of the track
   min_grade: CS              # and at or above this IMD grade at closest approach
   densify_minutes: 30        # interpolate fixes to this step before measuring distance
-  landfall_coast_buffer_km: 0
+  max_report_km: 500         # keep district rows up to this distance from the track
+  landfall_exclude_states: [Andaman & Nicobar Island, Lakshadweep]
