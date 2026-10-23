@@ -1,0 +1,29 @@
+# Private planning files (not for the repo)
+Climate_Risk_Project_Handbook.md
+Climate_Risk_Project_Handbook.zip
+diagrams/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Data (tracked with DVC later, never with Git)
+data/raw/
+data/interim/
+data/processed/
+
+# Secrets and local settings
+.env
+*.key
+
+# ML tracking output
+mlruns/
+
+# OS and editor files
+.DS_Store
+.vscode/
+.idea/
