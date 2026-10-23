@@ -1,0 +1,6 @@
+rbi_name,rbi_state,valid_from,valid_to,district_id,weight,split_flag
+ERNAKULAM,KERALA,2004-03-31,,595,1.0,false
+ALAPPUZHA,KERALA,2004-03-31,,598,1.0,false
+PATHANAMTHITTA,KERALA,2004-03-31,,599,1.0,false
+TOYNEWDIST,KERALA,2016-03-31,,595,0.6,true
+TOYNEWDIST,KERALA,2016-03-31,,598,0.4,true

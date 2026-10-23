@@ -1,0 +1,3 @@
+event_id,hazard_type,name,start_date,end_date,impact_quarter,states,source,emdat_id
+FL-2018-KER,flood,Kerala floods 2018,2018-08-08,2018-08-26,2018-09-30,Kerala,toy sample,
+CY-2019-FANI,cyclone,Cyclone Fani,2019-04-26,2019-05-04,2019-06-30,Odisha;West Bengal;Andhra Pradesh,toy sample,

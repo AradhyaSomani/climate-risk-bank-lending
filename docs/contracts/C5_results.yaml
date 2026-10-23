@@ -1,0 +1,49 @@
+contract: C5
+producer: B
+consumer: A
+description: >
+  Effect estimates and stress results read by the API and dashboard. Every number carries
+  its interval; stress numbers are changes in lending and deposits, never losses.
+tables:
+  effects:
+    file: data/processed/effects.parquet
+    sample: tests/fixtures/contracts/effects.csv
+    primary_key: [event_id, estimator, outcome, bank_group, sector, window_start, window_end]
+    columns:
+      event_id: {dtype: str, nullable: true, description: null (empty) for pooled estimates}
+      estimator: {dtype: str}
+      outcome: {dtype: str}
+      bank_group: {dtype: str}
+      sector: {dtype: str}
+      window_start: {dtype: int}
+      window_end: {dtype: int}
+      estimate: {dtype: float}
+      ci_low: {dtype: float}
+      ci_high: {dtype: float}
+      n_treated: {dtype: int, min: 0}
+      n_control: {dtype: int, min: 0}
+      pre_trend_p: {dtype: float, min: 0, max: 1, nullable: true}
+      code_version: {dtype: str}
+    checks:
+      - {kind: ordered, columns: [ci_low, estimate, ci_high]}
+      - {kind: ordered, columns: [window_start, window_end]}
+  stress_results:
+    file: data/processed/stress_results.parquet
+    sample: tests/fixtures/contracts/stress_results.csv
+    primary_key: [scenario_id, bank_group, metric, horizon]
+    columns:
+      scenario_id: {dtype: str}
+      bank_group: {dtype: str}
+      metric: {dtype: str, allowed: [d_credit, d_deposits, d_cd_ratio]}
+      horizon: {dtype: str, allowed: [q0_3, q4_7, q8_11]}
+      median: {dtype: float}
+      lower: {dtype: float}
+      upper: {dtype: float}
+      var_share_effect: {dtype: float, min: 0, max: 1, nullable: true}
+      var_share_hazard: {dtype: float, min: 0, max: 1, nullable: true}
+      var_share_exposure: {dtype: float, min: 0, max: 1, nullable: true}
+      var_share_generator: {dtype: float, min: 0, max: 1, nullable: true}
+      code_version: {dtype: str}
+    checks:
+      - {kind: ordered, columns: [lower, median, upper]}
+      - {kind: sum_to_one_row, columns: [var_share_effect, var_share_hazard, var_share_exposure, var_share_generator], tol: 0.01}
