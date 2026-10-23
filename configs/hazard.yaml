@@ -3,9 +3,11 @@
 flood:
   source_pre2019: gfd
   source_post2018: s1_unet   # only after the U-Net passes its Phase 2B gate; else s1_otsu
-  min_clear_perc: 0          # minimum GFD clear-view percentage for a pixel to count
+  min_clear_perc: 0          # minimum GFD clear-view fraction (0-1) for a pixel to count
   mask_permanent_water: true # drop jrc_perm_water pixels from flooded area
   event_hit_share: 0.01      # a district is "flooded in an event" above this flooded share
+  landcover: true            # add flooded built-up and cropland shares (ESA WorldCover 2021)
+  keep_rasters: true         # keep downloaded GFD rasters in data/raw/gfd (DVC-tracked)
 cyclone:
   radius_km: 100             # district counted as exposed within this distance of the track
   min_grade: CS              # and at or above this IMD grade at closest approach

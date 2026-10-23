@@ -20,7 +20,9 @@ log = logging.getLogger(__name__)
 
 STAGES: dict[str, list[str]] = {
     "data": [],
-    "hazard": [],
+    "hazard": [
+        "cri.hazard.flood_extent:build_gfd",
+    ],
     "events": [],
     "stress": [],
 }

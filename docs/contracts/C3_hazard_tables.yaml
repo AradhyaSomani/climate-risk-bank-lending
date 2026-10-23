@@ -15,6 +15,7 @@ tables:
       source: {dtype: str, allowed: [gfd, s1_unet, s1_otsu]}
       flooded_km2: {dtype: float, min: 0}
       flooded_share: {dtype: float, min: 0, max: 1, description: flooded area / district land area}
+      mapped_share: {dtype: float, min: 0, max: 1, description: share of the district inside the event raster's valid area}
       flooded_built_share: {dtype: float, min: 0, max: 1, nullable: true}
       flooded_crop_share: {dtype: float, min: 0, max: 1, nullable: true}
       duration_days: {dtype: float, min: 0, nullable: true, description: mean over flooded pixels}
