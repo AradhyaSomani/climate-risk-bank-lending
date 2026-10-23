@@ -8,6 +8,7 @@ All in `data/processed/` (DVC, not Git). Contract columns are in `docs/contracts
 | `cyclone_exposure_district_event.parquet` | storm x district (within 500 km) | `cri.hazard.cyclone_footprint` | IMD best track 1982-2026 |
 | `cyclone_storms.parquet` | storm | `cri.hazard.cyclone_footprint` | IMD best track |
 | `hazard_baseline_district.parquet` | district | `cri.hazard.baseline` | GFD, JRC GSW, Copernicus DEM, IMD |
+| `hazard_indicators.parquet` | district | `cri.hazard.indicators` | the tables above |
 | `disaster_records.parquet` | EM-DAT record x district (or state) | `cri.ingest.emdat` | EM-DAT (not yet downloaded) |
 
 ## Conventions
@@ -30,6 +31,17 @@ All in `data/processed/` (DVC, not Git). Contract columns are in `docs/contracts
   two overlapping records cover the same place.
 - Cyclone exposure is distance-and-grade only (no wind radii in the IMD record).
 - `rel_elev_median_m` is a proxy for height above nearest drainage, not HAND.
+- Short record (Phase 2A). The flood indicators rest on GFD's 18.8 years (2000-2018) and the
+  cyclone indicators on 43.7 years of IMD best track. A district hit once in 19 years and a
+  district never hit are hard to tell apart, so frequencies for rarely flooded districts are
+  noisy, and nothing after 2018 is in the flood record until the Sentinel-1 maps are added.
+  The validation in `docs/hazard_validation.md` tests how much this matters.
+- `perm_water_share` counts water inside the district polygon, and some 2011 polygons reach
+  into the sea or a harbour (Mumbai 51%, Mumbai Suburban 10%). Lagoons such as Chilika (Puri
+  18%) are real.
+- Flood means (`flood_mean_share`, `flood_built_share`, `flood_crop_share`,
+  `flood_duration_days`) are over the events that hit the district, so they measure how bad
+  a flood is when it comes; frequency is a separate indicator.
 - Coverage by state: `docs/eval_reports/hazard_coverage.md`.
 
 ## Not done yet
