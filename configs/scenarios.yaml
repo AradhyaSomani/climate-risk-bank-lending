@@ -30,5 +30,6 @@ generator:
       bay_of_bengal: [West Bengal, Odisha, Andhra Pradesh, Tamil Nadu, Puducherry]
       arabian_sea: [Gujarat, Maharashtra, Goa, Karnataka, Kerala, Daman & Diu]
   event_min_districts: 1         # a footprint must treat at least this many districts
+  seed_smoothing: 0.1            # never-hit districts get this share of the regional mean hits
   gpd_threshold_quantile: 0.8    # fit a generalized Pareto to sizes above this quantile
   gpd_min_exceedances: 30        # else keep the empirical size distribution
