@@ -1,0 +1,4 @@
+scenario_id,district_id,intensity,heavily_treated,beyond_observed
+replay-CY-2019-FANI,387,115.0,true,false
+replay-CY-2019-FANI,381,90.0,true,false
+scaled-CY-2019-FANI-x1.5,387,172.5,true,true

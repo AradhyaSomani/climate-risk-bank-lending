@@ -130,6 +130,15 @@ CREATE TABLE IF NOT EXISTS scenario (
   description   TEXT
 );
 
+CREATE TABLE IF NOT EXISTS scenario_district (           -- footprint of each scenario
+  scenario_id   TEXT REFERENCES scenario,
+  district_id   INTEGER REFERENCES district,
+  intensity     REAL NOT NULL,                  -- flooded share or wind kt
+  heavily_treated BOOLEAN NOT NULL,
+  beyond_observed BOOLEAN NOT NULL,
+  PRIMARY KEY (scenario_id, district_id)
+);
+
 CREATE TABLE IF NOT EXISTS stress_result (
   scenario_id   TEXT REFERENCES scenario,
   bank_group    TEXT NOT NULL,

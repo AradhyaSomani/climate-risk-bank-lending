@@ -60,6 +60,7 @@ TARGETS = [
            ["quarter_end", "bank_group", "sector", "tier", "route"]),
     Target("effect", "effects.parquet", []),
     Target("scenario", "scenarios.parquet", ["scenario_id"]),
+    Target("scenario_district", "scenario_district.parquet", ["scenario_id", "district_id"]),
     Target("stress_result", "stress_results.parquet",
            ["scenario_id", "bank_group", "metric", "horizon"]),
     Target("model_run", "model_runs.parquet", ["run_id"]),
