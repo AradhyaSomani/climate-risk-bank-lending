@@ -1,0 +1,34 @@
+# Phase 4B scenario footprints and 4C event generator (Person A). B's configs/stress.yaml
+# holds the metrics and horizons; this file only says which districts each scenario hits
+# and how hard. Placeholders until the pre-registration fixes them.
+replay: [FL-2015-CHENNAI, CY-2020-AMPHAN, CY-2019-FANI, FL-2008-KOSI, FL-2018-KERALA]
+shifted:
+  # move a past footprint to another region: grown from the most hazardous district of the
+  # target state along the district graph, severities matched by hazard rank
+  - {source: FL-2008-KOSI, target_state: Assam}
+  - {source: CY-2019-FANI, target_state: Andhra Pradesh}
+  - {source: CY-2020-AMPHAN, target_state: Gujarat}
+scaled:
+  factors: [0.5, 1.5]
+  sources: [FL-2008-KOSI, CY-2019-FANI]
+compound:
+  - [CY-2019-FANI, FL-2008-KOSI]
+generator:
+  seed: 42
+  years: 10000
+  regions:                       # hazard regions (state names as spelled in the 2011 shapefile)
+    flood:
+      gangetic_plain: [Bihar, Uttar Pradesh, West Bengal, Jharkhand, Uttarakhand, Haryana,
+                       NCT of Delhi, Punjab, Chandigarh]
+      northeast: [Assam, Arunanchal Pradesh, Meghalaya, Manipur, Mizoram, Nagaland, Tripura,
+                  Sikkim]
+      east_coast: [Odisha, Andhra Pradesh, Tamil Nadu, Puducherry]
+      west_coast: [Kerala, Karnataka, Goa, Maharashtra, Gujarat, Dadara & Nagar Havelli,
+                   Daman & Diu]
+      interior: [Madhya Pradesh, Chhattisgarh, Rajasthan, Jammu & Kashmir, Himachal Pradesh]
+    cyclone:
+      bay_of_bengal: [West Bengal, Odisha, Andhra Pradesh, Tamil Nadu, Puducherry]
+      arabian_sea: [Gujarat, Maharashtra, Goa, Karnataka, Kerala, Daman & Diu]
+  event_min_districts: 1         # a footprint must treat at least this many districts
+  gpd_threshold_quantile: 0.8    # fit a generalized Pareto to sizes above this quantile
+  gpd_min_exceedances: 30        # else keep the empirical size distribution

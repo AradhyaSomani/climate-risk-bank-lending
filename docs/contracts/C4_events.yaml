@@ -36,3 +36,27 @@ tables:
     checks:
       - {kind: implies, if: heavily_treated, then: treated}
       - {kind: not_both, columns: [treated, excluded]}
+  scenarios:
+    file: data/processed/scenarios.parquet
+    sample: tests/fixtures/contracts/scenarios.csv
+    primary_key: [scenario_id]
+    columns:
+      scenario_id: {dtype: str}
+      scenario_type: {dtype: str, allowed: [replay, shifted, scaled, compound, generated]}
+      source_event: {dtype: str, description: event_id in events.parquet (the first one for a compound)}
+      hazard_type: {dtype: str, allowed: [flood, cyclone, flood+cyclone, cyclone+flood, cyclone+cyclone, flood+flood]}
+      severity: {dtype: float, min: 0, description: intensity multiplier (1 = as observed)}
+      hypothetical: {dtype: bool}
+      n_districts: {dtype: int, min: 0, description: 0 = no footprint yet; not usable}
+      description: {dtype: str}
+      assumptions: {dtype: str}
+  scenario_district:
+    file: data/processed/scenario_district.parquet
+    sample: tests/fixtures/contracts/scenario_district.csv
+    primary_key: [scenario_id, district_id]
+    columns:
+      scenario_id: {dtype: str}
+      district_id: {dtype: int}
+      intensity: {dtype: float, min: 0, description: flooded share (floods) or wind kt at closest approach (cyclones)}
+      heavily_treated: {dtype: bool}
+      beyond_observed: {dtype: bool, description: intensity above the largest in the event catalogue}
