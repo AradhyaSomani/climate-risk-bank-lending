@@ -1,0 +1,24 @@
+# Phase 3A event catalogue and treatment rules (contract C4). Every number is a placeholder
+# until the Phase 0 pre-registration fixes it; after that, change it only through
+# docs/decision_log.md, and never after looking at effect sizes.
+candidates: data/events/events_candidates.csv
+# the events the main specification uses (others stay in the catalogue for robustness)
+main_events: [FL-2008-KOSI, CY-2013-PHAILIN, CY-2014-HUDHUD, FL-2015-CHENNAI, FL-2018-KERALA,
+              CY-2019-FANI, CY-2020-AMPHAN]
+flood:
+  treated_share: 0.05          # treated if more than 5% of the district's area was flooded
+  heavy_share: 0.15            # heavily treated above 15%
+  partial_share: 0.01          # flooded above 1% but not treated: exclusion zone
+  # GFD footprints often span a whole monsoon spell across several states (the Kosi record
+  # also floods Assam and Uttar Pradesh); treat only inside the event's states and put
+  # flooded districts elsewhere in the exclusion zone
+  restrict_to_states: true
+cyclone:
+  treated_km: 100              # treated if the track passed within 100 km
+  treated_grade: SCS           # at severe cyclonic storm strength or above
+  heavy_km: 50
+  heavy_grade: VSCS
+  partial_km: 200              # within 200 km at cyclonic storm strength: exclusion zone
+  partial_grade: CS
+exclusion:
+  neighbours: true             # districts sharing a border with a treated district
