@@ -1,0 +1,3 @@
+scenario_id,scenario_type,source_event,hazard_type,severity,hypothetical,n_districts,description,assumptions
+replay-CY-2019-FANI,replay,CY-2019-FANI,cyclone,1.0,false,2,toy sample,toy
+scaled-CY-2019-FANI-x1.5,scaled,CY-2019-FANI,cyclone,1.5,true,1,toy sample,toy

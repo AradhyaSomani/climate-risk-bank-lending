@@ -30,14 +30,14 @@ STAGES: dict[str, list[str]] = {
         "cri.hazard.validation:run",
     ],
     "events": ["cri.ml.graph.build:build", "cri.events.catalogue:build"],
-    "stress": [],
+    "stress": ["cri.stress.scenarios:build"],
 }
 
 STAGE_CONFIGS: dict[str, list[str]] = {
     "data": ["project", "paths"],
     "hazard": ["project", "paths", "hazard"],
     "events": ["project", "paths", "events", "ml/graph"],
-    "stress": ["project", "paths"],
+    "stress": ["project", "paths", "scenarios"],
 }
 
 
