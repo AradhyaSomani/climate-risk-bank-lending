@@ -8,7 +8,7 @@ here as a negative result with its numbers.
 | --- | --- | --- | --- | --- |
 | U-Net flood mapper | `flood_cnn.md` | Otsu on VV and VH (change detection once a pre-event scene is exported) | IoU of water on held-out events | not run |
 | Flood susceptibility | `susceptibility.md` | Flood-event count | Spatial block CV AUC | not run |
-| District graph model | `graph.md` | No graph (H0), spatial lag (H1) | Leave-one-event-out RMSE | not run |
+| District graph model | `graph.md` | No graph (H0), spatial lag (H1) | Leave-one-event-out RMSE | graph built; models wait for the credit panel |
 | State-space counterfactual | `statespace.md` | Parallel-trend DiD, ARIMA | Placebo-event error | not run |
 | Causal forest / double ML | `causal_ml.md` | Subgroup regressions | Stability across left-out events | not run |
 | LLM table extractor | `extract.md` | Manual extraction | Cell accuracy after the verifier (98%) | not run |
