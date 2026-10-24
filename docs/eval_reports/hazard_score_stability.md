@@ -24,7 +24,23 @@ Share of districts given the same tier.
 | cyclone | weighted | 432 | 57 | 88 | 63 |
 | flood | pca | 320 | 160 | 96 | 64 |
 | flood | rank_avg | 320 | 160 | 96 | 64 |
+| flood | susceptibility | 320 | 160 | 96 | 64 |
 | flood | weighted | 320 | 160 | 96 | 64 |
+
+## Susceptibility version (Phase 2B-C), flood only
+
+Added because the model passed its gate (`docs/model_cards/susceptibility.md`). Against the rank_avg flood score over 640 districts: Spearman 0.76, same tier 65%, within one tier 97%. It uses terrain and land cover only, so it can flag districts the short flood record misses; it is not in the combined score.
+
+Districts at least two tiers higher on susceptibility than on the record (6):
+
+| name | state | tier_rank_avg | tier_sus |
+| --- | --- | --- | --- |
+| Jehanabad | Bihar | 2 | 4 |
+| Araria | Bihar | 2 | 4 |
+| East | NCT of Delhi | 2 | 4 |
+| Lakshadweep | Lakshadweep | 1 | 4 |
+| Central | NCT of Delhi | 2 | 4 |
+| Uttar Dinajpur | West Bengal | 2 | 4 |
 
 ## PCA loadings, flood (first component explains 43%)
 
