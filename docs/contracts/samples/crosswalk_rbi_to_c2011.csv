@@ -1,0 +1,9 @@
+rbi_name,rbi_state,valid_from,valid_to,district_id,weight,match_type
+KASARAGOD,KERALA,2004-03-31,,588,1.0,normalized
+Kasargod,KERALA,2001-03-31,2004-03-31,588,1.0,fuzzy
+THRISSUR,KERALA,2004-03-31,,594,1.0,normalized
+Trichur,KERALA,2001-03-31,2004-03-31,594,1.0,manual
+ERNAKULAM,KERALA,2001-03-31,,595,1.0,normalized
+ALAPPUZHA,KERALA,2001-03-31,,598,1.0,normalized
+TOY NEW DISTRICT,KERALA,2020-03-31,,595,0.62,split
+TOY NEW DISTRICT,KERALA,2020-03-31,,598,0.38,split
