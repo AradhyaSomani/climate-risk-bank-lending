@@ -6,7 +6,7 @@ here as a negative result with its numbers.
 
 | Component | Card | Baseline | Gate metric | Status |
 | --- | --- | --- | --- | --- |
-| U-Net flood mapper | `flood_cnn.md` | Otsu on VV and VH (change detection once a pre-event scene is exported) | IoU of water on held-out events | not run |
+| U-Net flood mapper | `flood_cnn.md` | Otsu on VV and VH per chip, fixed VV and VH thresholds fitted on training events | IoU of water on held-out events | **passed** (0.628 vs 0.466); Kerala run waits for the Earth Engine export |
 | Flood susceptibility | `susceptibility.md` | Flood-event count before 2012 | Spatial block CV AUC on later floods | **passed** (0.905 vs 0.880); added as score version `susceptibility` |
 | District graph model | `graph.md` | No graph (H0), spatial lag (H1) | Leave-one-event-out RMSE | graph built; models wait for the credit panel |
 | State-space counterfactual | `statespace.md` | Parallel-trend DiD, ARIMA | Placebo-event error | not run |

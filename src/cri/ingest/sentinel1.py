@@ -13,6 +13,10 @@ goes through cri.hazard.zonal_stats unchanged:
 
     python -m cri.ingest.sentinel1 --event FL-2018-KERALA --bbox 74.8 8.2 77.5 12.9 \
         --pre 2018-06-01 2018-07-31 --post 2018-08-14 2018-08-24 --bucket my-gcs-bucket
+
+`--kind backscatter` exports the post-event VV and VH (dB, 10 m) plus `jrc_perm_water`
+instead, as the input scene for the U-Net (`cri.ml.flood_cnn.predict`). Keep the box small
+at 10 m: central Kerala (76.2 9.0 76.9 10.3) is about 1.3 GB.
 """
 
 from __future__ import annotations
@@ -89,16 +93,38 @@ def flood_image(bbox, pre, post, orbit: str = "DESCENDING", **kw):
     )
 
 
-def export(event_id: str, bbox, pre, post, bucket: str, orbit: str = "DESCENDING") -> object:
+def backscatter_image(bbox, post, orbit: str = "DESCENDING", perm_occurrence: int = 90):
+    """Post-event minimum VV and VH (dB) and JRC permanent water, for the U-Net."""
     ee = _ee()
-    img = flood_image(bbox, pre, post, orbit)
+    aoi = ee.Geometry.Rectangle(list(bbox))
+    s1 = (
+        ee.ImageCollection("COPERNICUS/S1_GRD")
+        .filterBounds(aoi)
+        .filter(ee.Filter.eq("instrumentMode", "IW"))
+        .filter(ee.Filter.eq("orbitProperties_pass", orbit))
+        .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
+        .select(["VV", "VH"])
+        .filterDate(*post)
+    )
+    perm = ee.Image("JRC/GSW1_4/GlobalSurfaceWater").select("occurrence").gte(perm_occurrence)
+    return (s1.min().toFloat().addBands(perm.unmask(0).rename("jrc_perm_water").toFloat())
+            .clip(aoi).set({"post": post, "orbit": orbit}))
+
+
+def export(event_id: str, bbox, pre, post, bucket: str, orbit: str = "DESCENDING",
+           kind: str = "otsu") -> object:
+    ee = _ee()
+    if kind == "backscatter":
+        img, scale = backscatter_image(bbox, post, orbit), 10
+    else:
+        img, scale = flood_image(bbox, pre, post, orbit), DEFAULTS["scale_m"]
     task = ee.batch.Export.image.toCloudStorage(
         image=img,
-        description=f"s1_otsu_{event_id}",
+        description=f"s1_{kind}_{event_id}",
         bucket=bucket,
-        fileNamePrefix=f"sentinel1/{event_id}_s1_otsu",
+        fileNamePrefix=f"sentinel1/{event_id}_s1_{kind}",
         region=ee.Geometry.Rectangle(list(bbox)),
-        scale=DEFAULTS["scale_m"],
+        scale=scale,
         crs="EPSG:4326",
         maxPixels=1e11,
     )
@@ -114,8 +140,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--post", nargs=2, required=True)
     p.add_argument("--orbit", default="DESCENDING", choices=["ASCENDING", "DESCENDING"])
     p.add_argument("--bucket", required=True, help="GCS bucket for the export")
+    p.add_argument("--kind", default="otsu", choices=["otsu", "backscatter"])
     a = p.parse_args(argv)
-    task = export(a.event, a.bbox, a.pre, a.post, a.bucket, a.orbit)
+    task = export(a.event, a.bbox, a.pre, a.post, a.bucket, a.orbit, a.kind)
     print(f"started Earth Engine task {task.id}; download the GeoTIFF to data/raw/sentinel1/")
 
 

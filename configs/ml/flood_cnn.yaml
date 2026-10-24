@@ -1,4 +1,4 @@
-# Phase 2B-B U-Net flood mapper. Placeholders until the first full run.
+# Phase 2B-B U-Net flood mapper. First full run: docs/model_cards/flood_cnn.md
 data:
   dataset: sen1floods11            # data/raw/s1_labels (gs://sen1floods11/v1.1)
   patch: 256                       # chips are 512x512 at 10 m; cut into four patches
@@ -9,10 +9,10 @@ data:
   test_events: [India, Bolivia]
   val_events: [Sri-Lanka]
 model:
-  base_channels: 32                # 16 for the small-encoder ablation, 64 for the larger
+  base_channels: 16                # the run that passed; 32 and 64 are the larger ablations
   depth: 4
 train:
-  epochs: 40
+  epochs: 15                       # CPU budget; the best validation epoch is kept
   batch_size: 16
   lr: 0.001
   weight_decay: 0.0001
@@ -22,5 +22,6 @@ train:
   seed: 42
 gate:
   metric: iou_water                # per held-out event, then averaged over events
-  baselines: [otsu_vh, otsu_vv]    # change detection needs a pre-event scene (Earth Engine)
+  baselines: [otsu_vh, otsu_vv, fixed_vh, fixed_vv]  # fixed = one threshold fitted on train;
+                                   # change detection needs a pre-event scene (Earth Engine)
   margin: 0.0
