@@ -27,6 +27,8 @@ def main(argv: list[str] | None = None) -> None:
 
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--measure", default="credit", choices=["credit", "deposits"])
+    p.add_argument("--ring", type=int, default=0,
+                   help="0: test on treated districts; 1: on their neighbours (Phase 3F)")
     a = p.parse_args(argv)
     runlog.setup_logging()
     proc = config.path("processed")
@@ -45,15 +47,25 @@ def main(argv: list[str] | None = None) -> None:
     ed = pd.read_parquet(proc / "event_district.parquet")
     s = models.shock_matrix(events, ed, y.index, y.columns)
     d = models.design(y, s, w)
-    with tracking.start_run("graph", {"measure": a.measure, **cfg["graph"]},
-                            run_name=f"loeo_{a.measure}") as run:
-        res = models.leave_one_event_out(d, events, ed, w)
+    targets = None
+    if a.ring:
+        from cri.events.spillover import rings
+        from cri.stress.scenarios import adjacency_from_edges
+
+        adj = adjacency_from_edges(pd.read_parquet(proc / "district_edges.parquet"))
+        targets = {}
+        for e, g in ed.groupby("event_id"):
+            r = rings(set(g.district_id[g.treated]), adj, depth=a.ring)
+            targets[e] = {k for k, v in r.items() if v == a.ring}
+    with tracking.start_run("graph", {"measure": a.measure, "ring": a.ring, **cfg["graph"]},
+                            run_name=f"loeo_{a.measure}_ring{a.ring}") as run:
+        res = models.leave_one_event_out(d, events, ed, w, targets=targets)
         mean = res[res.event_id == "mean"].iloc[0]
         run.log_metrics({k: mean[k] for k in ("h0_no_graph", "h1_spatial_lag", "h2_graph_conv")})
         passed = tracking.record_gate(run, "h1_spatial_lag", mean.h1_spatial_lag,
                                       mean.h2_graph_conv, metric=cfg["gate"]["metric"],
                                       higher_is_better=False)
-    out = config.path("interim") / f"graph_loeo_{a.measure}.csv"
+    out = config.path("interim") / f"graph_loeo_{a.measure}_ring{a.ring}.csv"
     res.to_csv(out, index=False)
     print(res.round(4).to_string(index=False))
     print("gate (H2 beats H1):", "passed" if passed else "failed")
