@@ -54,6 +54,10 @@ def build_gfd(ids: list[int] | None = None, keep_rasters: bool | None = None) ->
             tif = fetch_event(int(ev.dfo_id), raw_dir, index)
             rows = event_flood_extent(tif, districts, eid, "gfd", hz.get("landcover", True))
             rows.to_parquet(part, index=False)
+            # coarse grid of the same event for the susceptibility model (Phase 2B-C)
+            from cri.hazard.flood_grid import save_event
+
+            save_event(eid, tif)
             if not keep:
                 shutil.rmtree(tif.parent)
         parts.append(pd.read_parquet(part))
