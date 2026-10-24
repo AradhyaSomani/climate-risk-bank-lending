@@ -25,3 +25,17 @@ jobs:
         run: python -m cri.contracts --samples
       - name: Tests (no Earth Engine, no database)
         run: python -m pytest -m "not gee and not db"
+      - name: API end to end on the contract samples
+        env:
+          CRI_API_SOURCE: sample
+        run: |
+          python - <<'PY'
+          from fastapi.testclient import TestClient
+          from cri.api.app import create_app
+          c = TestClient(create_app())
+          for path in ["/health", "/districts", "/hazard-scores", "/events", "/scenarios",
+                       "/effects", "/stress-results"]:
+              r = c.get(path)
+              assert r.status_code == 200, (path, r.text)
+              print(path, r.json().get("n"))
+          PY
