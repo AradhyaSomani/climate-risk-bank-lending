@@ -57,6 +57,7 @@ def synthetic(n_side=6, T=40, spill=0.6, seed=0):
 
 
 def test_spatial_lag_wins_when_shocks_spill_over():
+    pytest.importorskip("torch")
     y, events, ed, w = synthetic()
     s = models.shock_matrix(events, ed, y.index, y.columns)
     assert s.to_numpy().sum() == len(ed)
