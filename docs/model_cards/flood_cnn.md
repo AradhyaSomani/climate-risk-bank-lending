@@ -45,11 +45,22 @@ epoch with the best validation IoU is kept (epoch 9, validation IoU 0.669). Vali
 moves a lot between epochs (0.47 to 0.67), so the epoch choice matters and a second seed
 would show how much.
 
-Ablations: SAR plus terrain (VV, VH, DEM, slope) is run separately and reported below when it
-finishes. Not run yet: base 32 and no augmentation.
+Ablations (same split, settings and seed; `--channels vv vh dem slope` adds the Copernicus
+90 m DEM and its slope resampled onto each chip):
+
+| Run | India | Bolivia | Mean IoU | Best epoch | MLflow run |
+| --- | --- | --- | --- | --- | --- |
+| SAR only, VV + VH (kept) | 0.553 | 0.702 | 0.628 | 9 | 039b6085... |
+| SAR plus terrain | 0.564 | 0.666 | 0.615 | 8 | 644987bf... |
+
+Terrain helps a little on India (+0.011) and hurts on Bolivia (-0.037); with one seed and
+validation IoU moving by 0.1 between epochs, neither difference is above noise. The SAR-only
+model stays the main one: it needs no DEM at prediction time. Both pass the gate. Not run
+yet: base 32 and no augmentation.
 
 ## Compute
-Cloud container CPU, 3 threads shared with other jobs: 84 minutes for 15 epochs. MLflow
+Cloud container CPU: 84 minutes for 15 epochs on 3 shared threads (SAR only), 45 minutes on
+4 threads (SAR plus terrain). MLflow
 experiment `flood_cnn`, run 039b60853c0746e8b04591e1a4e330cf. Weights:
 `data/interim/flood_cnn/sar_base16.pt` (and `data/models/flood_cnn/` since it passed).
 Scores per event: `data/interim/flood_cnn/results.csv`.
