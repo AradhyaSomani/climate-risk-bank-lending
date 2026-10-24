@@ -163,6 +163,24 @@ def write_report(scores: pd.DataFrame, info: dict, out: Path) -> Path:
         _md(stability(scores)), "",
         "## Districts per tier\n", _md(tier_counts(scores)), "",
     ]
+    sus = scores[scores.score_version == "susceptibility"]
+    if len(sus):
+        ra = scores[(scores.score_version == "rank_avg") & (scores.hazard_type == "flood")]
+        m = ra.merge(sus, on="district_id", suffixes=("_rank_avg", "_sus"))
+        rho = m.score_rank_avg.corr(m.score_sus, method="spearman")
+        parts += ["## Susceptibility version (Phase 2B-C), flood only\n",
+                  "Added because the model passed its gate (`docs/model_cards/susceptibility.md`). "
+                  f"Against the rank_avg flood score over {len(m)} districts: Spearman "
+                  f"{rho:.2f}, same tier {(m.tier_rank_avg == m.tier_sus).mean():.0%}, within "
+                  f"one tier {((m.tier_rank_avg - m.tier_sus).abs() <= 1).mean():.0%}. It uses "
+                  "terrain and land cover only, so it can flag districts the short flood "
+                  "record misses; it is not in the combined score.\n"]
+        far = m[(m.tier_sus - m.tier_rank_avg) >= 2].merge(d, on="district_id")
+        if len(far):
+            parts += ["Districts at least two tiers higher on susceptibility than on the record "
+                      f"({len(far)}):\n",
+                      _md(far.nlargest(15, "score_sus")[["name", "state", "tier_rank_avg",
+                                                         "tier_sus"]]), ""]
     for hz, v in info.items():
         load = v["loadings"].round(2).rename("loading").reset_index()
         load.columns = ["indicator", "loading"]
@@ -177,10 +195,32 @@ def write_report(scores: pd.DataFrame, info: dict, out: Path) -> Path:
     return out
 
 
+def susceptibility_rows(processed: Path, cutoffs: list[float]) -> pd.DataFrame | None:
+    """Flood rows of version `susceptibility` (Phase 2B-C), only if the model's latest run
+    passed its gate; None otherwise. The three main versions are left as they are."""
+    path = processed / "susceptibility_district.parquet"
+    runs = config.path("ml.model_runs")
+    if not (path.exists() and runs.exists()):
+        return None
+    r = pd.read_parquet(runs)
+    r = r[r.component == "susceptibility"].sort_values("created_at")
+    if r.empty or not bool(r.passed_gate.iloc[-1]):
+        log.info("susceptibility model has not passed its gate: version left out")
+        return None
+    s = pd.read_parquet(path).dropna(subset=["susceptibility"]).set_index("district_id")
+    score = pct_rank(s.susceptibility)
+    return pd.DataFrame({"district_id": s.index.astype(int), "score_version": "susceptibility",
+                         "hazard_type": "flood", "score": score.to_numpy(),
+                         "tier": tiers(s.susceptibility, cutoffs).to_numpy()})
+
+
 def build(report: Path | None = REPORT) -> list[Path]:
     processed = config.path("processed")
     ind = pd.read_parquet(processed / "hazard_indicators.parquet")
     scores, info = compute(ind)
+    extra = susceptibility_rows(processed, config.load("hazard")["score"]["tier_cutoffs"])
+    if extra is not None:
+        scores = pd.concat([scores, extra], ignore_index=True)
     scores["data_version"] = config.load("project").get("data_version", "dev")
     spec = contracts.get_table("C3", "hazard_scores")
     errs = contracts.validate_frame(scores, spec)
