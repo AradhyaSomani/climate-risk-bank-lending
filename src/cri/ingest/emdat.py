@@ -148,7 +148,7 @@ def link_events(rec: pd.DataFrame, storms: pd.DataFrame | None, gfd: pd.DataFram
             if len(cand) == 1:
                 rec.at[i, "imd_event_id"] = f"IMD-{cand.storm_id.iloc[0]}"
         if gfd is not None:
-            ov = (np.minimum(gfd.ended, end + slack) - np.maximum(gfd.began, r.start_date - slack))
+            ov = gfd.ended.clip(upper=end + slack) - gfd.began.clip(lower=r.start_date - slack)
             ov = ov.dt.days
             if (ov >= 0).any():
                 rec.at[i, "gfd_event_id"] = f"GFD-{int(gfd.dfo_id[ov.idxmax()])}"
