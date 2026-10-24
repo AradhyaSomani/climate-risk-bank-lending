@@ -34,3 +34,4 @@ non-commercial too. Code is licensed separately (decided in Phase 5E).
 | [district_boundaries.md](district_boundaries.md) | DataMeet Census 2011 districts |
 | [natural_earth.md](natural_earth.md) | Natural Earth 10 m land |
 | [hazard_tables.md](hazard_tables.md) | A's processed hazard tables |
+| [events.md](events.md) | Event catalogue and treatment flags (C4) |
