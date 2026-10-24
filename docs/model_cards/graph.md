@@ -24,6 +24,11 @@ disaster beyond a simple spatial lag. Feeds the spillover check in Phase 3F.
 - Result: **not run**. Needs `panel_credit_deposit.parquet` from B. The code is tested on a
   simulated grid where shocks spill over (H1 beats H0 there, as it should).
 
+## Spillover use (Phase 3F)
+`python -m cri.ml.graph.run --ring 1` scores the three models on the neighbours of treated
+districts instead of the treated ones, next to the ring difference-in-differences in
+`python -m cri.events.spillover` (ring 1 and ring 2 against far controls, bootstrap interval).
+
 ## Model
 Ridge with alpha 1 for H0 and H1; H2 with 16 hidden units, Adam (lr 0.01, weight decay
 1e-4), 300 full-batch epochs.

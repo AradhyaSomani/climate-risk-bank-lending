@@ -136,8 +136,12 @@ def fit_predict_graph(d: pd.DataFrame, train: np.ndarray, test: np.ndarray, w: n
 
 
 def leave_one_event_out(d: pd.DataFrame, events: pd.DataFrame, event_district: pd.DataFrame,
-                        w: np.ndarray, graph_kwargs: dict | None = None) -> pd.DataFrame:
-    """RMSE of H0, H1 and H2 on each held-out event's treated districts in its window."""
+                        w: np.ndarray, graph_kwargs: dict | None = None,
+                        targets: dict[str, set[int]] | None = None) -> pd.DataFrame:
+    """RMSE of H0, H1 and H2 on each held-out event's treated districts in its window.
+
+    `targets` replaces the treated districts as the test set (e.g. the ring of neighbours,
+    for the Phase 3F spillover test)."""
     usable = d[OWN + SPATIAL + ["y"]].notna().all(axis=1).to_numpy()
     quarters = pd.DatetimeIndex(sorted(d.quarter_end.unique()))
     rows = []
@@ -148,8 +152,11 @@ def leave_one_event_out(d: pd.DataFrame, events: pd.DataFrame, event_district: p
         i0 = quarters.get_loc(q0)
         win = set(quarters[i0:i0 + WINDOW])
         in_win = d.quarter_end.isin(win).to_numpy()
-        treated = event_district[(event_district.event_id == ev.event_id)
-                                 & event_district.treated].district_id
+        if targets is not None:
+            treated = pd.Series(sorted(targets.get(ev.event_id, set())), dtype=int)
+        else:
+            treated = event_district[(event_district.event_id == ev.event_id)
+                                     & event_district.treated].district_id
         test = in_win & d.district_id.isin(treated).to_numpy() & usable
         train = ~in_win & usable
         if test.sum() == 0 or train.sum() < 50:
