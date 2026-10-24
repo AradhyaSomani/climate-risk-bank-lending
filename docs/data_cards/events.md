@@ -49,3 +49,13 @@ until the pre-registration fixes them.
 - Chennai 2015 has only 3 treated districts because GFD barely sees urban flooding (Chennai
   district 0.2% flooded); the Sentinel-1 footprint should replace it.
 - Amphan, Tauktae and Yaas fall in COVID-19 quarters (see the confounders list).
+
+## Stress-test footprints (Phases 4B and 4C)
+- `scenarios.parquet` and `scenario_district.parquet` (contract C4) from
+  `python -m cri.stress.scenarios`: replays, shifted, scaled and compound footprints, as listed
+  in `configs/scenarios.yaml`. Kerala 2018 is listed with no districts until its footprint
+  exists.
+- `generated_events.parquet` from `python -m cri.stress.event_generator`: 10,000 simulated
+  years of events and footprints. Check report: `docs/eval_reports/event_generator_check.md`.
+  No heavy tail is fitted yet (23 flood and 10 cyclone exceedances, fewer than 30), so no
+  simulated event is larger than the largest in the record.
