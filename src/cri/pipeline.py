@@ -1,8 +1,9 @@
 """Stage runner behind `make data`, `make hazard`, `make events` and `make stress`.
 
 Each stage is an ordered list of steps, given as "module:function". A step takes no
-arguments, reads its settings from configs/, and returns the list of files it wrote. Every
-step is logged to the run table (cri.runlog). Steps owned by Person B are registered by B.
+arguments, reads its settings from configs/, and returns the files it wrote (a list, or a
+single path). Every step is logged to the run table (cri.runlog). Steps owned by Person B
+are registered by B.
 
     python -m cri.pipeline hazard            # run every step of a stage
     python -m cri.pipeline hazard --list     # show the steps
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import logging
+from pathlib import Path
 
 from cri import runlog
 
@@ -53,7 +55,10 @@ def run_stage(stage: str) -> None:
     for step in steps:
         log.info("%s: %s", stage, step)
         with runlog.run(f"{stage}:{step}", STAGE_CONFIGS[stage]) as outputs:
-            outputs.extend(str(p) for p in (resolve(step)() or []))
+            written = resolve(step)() or []
+            if isinstance(written, (str, Path)):  # a step that writes one file may return it
+                written = [written]
+            outputs.extend(str(p) for p in written)
 
 
 def main(argv: list[str] | None = None) -> None:
