@@ -4,16 +4,19 @@ Reads every file in data/raw/rbi/ with cri.ingest.rbi_bsr, then prints the
 numbers docs/00_rbi_audit.md asks for and saves one plot per test state.
 
     python scripts/rbi_first_look.py
+    python scripts/rbi_first_look.py --out docs/00_rbi_first_look.md
     python scripts/rbi_first_look.py --raw data/raw/rbi --unit lakh \
         --states Kerala Odisha "Tamil Nadu"
 
 Outputs:
     data/interim/rbi_first_look.parquet     the parsed long table (not committed)
     docs/figures/00_rbi_<state>.png         credit and deposits per district
-    printed markdown                        paste into docs/00_rbi_audit.md
+    printed markdown                        paste into docs/00_rbi_audit.md (--out also
+                                            writes it to a file)
 """
 
 import argparse
+import contextlib
 import sys
 from pathlib import Path
 
@@ -83,20 +86,22 @@ def plot_state(df: pd.DataFrame, state: str, out: Path) -> None:
     print(f"  saved {out.relative_to(ROOT)}")
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--raw", default=str(ROOT / "data" / "raw" / "rbi"))
-    ap.add_argument("--unit", default=None,
-                    help="Force the unit if files do not state it (lakh or crore)")
-    ap.add_argument("--states", nargs="+", default=["Kerala", "Odisha", "Tamil Nadu"])
-    args = ap.parse_args()
+class Tee:
+    """Write to several streams at once (the screen and the --out file)."""
 
-    df = read_folder(args.raw, unit=args.unit)
-    out = ROOT / "data" / "interim" / "rbi_first_look.parquet"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(out, index=False)
+    def __init__(self, *streams):
+        self.streams = streams
 
+    def write(self, text: str) -> None:
+        for s in self.streams:
+            s.write(text)
+
+    def flush(self) -> None:
+        for s in self.streams:
+            s.flush()
+
+
+def report(df: pd.DataFrame, test_states: list[str]) -> None:
     q = df["quarter_end"]
     print("## Numbers for docs/00_rbi_audit.md\n")
     print(f"- Files read: {df.source_file.nunique()}; rows: {len(df):,}")
@@ -109,7 +114,7 @@ def main() -> None:
     print(f"- Amounts missing (blank or '-'): {df.amount_cr.isna().mean():.1%} of rows")
 
     cov = coverage_table(df)
-    states = {s.lower() for s in args.states}
+    states = {s.lower() for s in test_states}
     test = [c for c in cov.columns if c == "all_states" or str(c).lower() in states]
     print("\n### Districts reporting per quarter (first 4, last 4, and the break window)\n")
     rows = set(cov.index[:4]) | set(cov.index[-4:]) | (set(BREAK_QUARTERS) & set(cov.index))
@@ -125,8 +130,31 @@ def main() -> None:
           .rename(index=lambda d: f"{d:%Y-%m-%d}").to_markdown())
 
     print("\n### Plots\n")
-    for s in args.states:
+    for s in test_states:
         plot_state(df, s, ROOT / "docs" / "figures" / f"00_rbi_{s.lower().replace(' ', '_')}.png")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--raw", default=str(ROOT / "data" / "raw" / "rbi"))
+    ap.add_argument("--unit", default=None,
+                    help="Force the unit if files do not state it (lakh or crore)")
+    ap.add_argument("--states", nargs="+", default=["Kerala", "Odisha", "Tamil Nadu"])
+    ap.add_argument("--out", help="also write the printed markdown to this file")
+    args = ap.parse_args()
+
+    df = read_folder(args.raw, unit=args.unit)
+    out = ROOT / "data" / "interim" / "rbi_first_look.parquet"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(out, index=False)
+
+    if not args.out:
+        report(df, args.states)
+        return
+    with open(args.out, "w") as f, contextlib.redirect_stdout(Tee(sys.stdout, f)):
+        report(df, args.states)
+    print(f"wrote {args.out}")
 
 
 if __name__ == "__main__":
