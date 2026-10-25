@@ -42,17 +42,22 @@ it with `python -m cri.ingest.sen1floods11`).
 
 ```bash
 git pull
-dvc pull                 # data that matches the .dvc files you just pulled
+dvc pull
 ```
+
+`dvc pull` brings the data that matches the `.dvc` files you just pulled.
 
 After a change to `raw/`, a rebuild that changes `processed/`, or a new model in `models/`:
 
 ```bash
-make dvc-track           # dvc add data/raw data/processed data/models
-dvc push                 # copy the new files to the shared folder
+make dvc-track
+dvc push
 git add data/*.dvc
-git commit -m "Update the data to match <what changed>"
+git commit -m "Update the processed tables after the rebuild"
 ```
+
+`make dvc-track` runs `dvc add data/raw data/processed data/models`, and `dvc push` copies
+the new files to the shared folder. Change the commit message to say what changed.
 
 Push to DVC before you push the commit, so the other person never pulls `.dvc` files whose
 data is not in the folder yet.
