@@ -1,0 +1,30 @@
+contract: C2
+name: panel
+version: 0.1.0
+producer: B
+consumer: A
+description: >
+  Quarterly credit and deposits per Census 2011 district, bank group and sector,
+  after applying the C1 crosswalk weights. Long format: one amount per row.
+notes:
+  - The bank_group and sector lists are provisional until the Phase 0 A audit confirms which splits RBI publishes at district level.
+  - Deposits have no sector split; their rows use sector = all.
+  - Rows with bank_group = all and sector = all are the totals. Sums of the parts may differ from the totals because of RBI suppression and rounding; do not assume they add up.
+tables:
+  panel_credit_deposit:
+    file: data/processed/panel_credit_deposit.parquet
+    sample: tests/fixtures/contracts/panel_credit_deposit.csv
+    primary_key: [district_id, quarter_end, bank_group, measure, sector]
+    columns:
+      district_id: {dtype: int, nullable: false, min: 1, max: 999}
+      quarter_end: {dtype: date, nullable: false, quarter_end: true}
+      bank_group: {dtype: str, nullable: false, allowed: [all, sbi, nationalised, private, foreign, rrb, sfb, payments]}
+      measure: {dtype: str, nullable: false, allowed: [credit, deposits]}
+      sector: {dtype: str, nullable: false, allowed: [all, agriculture, industry, transport, professional_services, personal_loans, trade, finance, other]}
+      amount_cr: {dtype: float, nullable: true, min: 0, description: Rupees crore, nominal. Null means RBI did not report it, never zero.}
+      n_offices: {dtype: int, nullable: true, min: 0, description: Reporting offices behind the amount, where RBI gives it}
+      series_break: {dtype: bool, nullable: false, description: True for quarters on or after a known change in reporting or coverage, see docs/data_cards/rbi.md}
+      split_flag: {dtype: bool, nullable: false, description: Copied from C1 district_master.split_flag}
+      imputed_share: {dtype: float, nullable: false, min: 0, max: 1, description: Share of the amount that came through a crosswalk weight below 1}
+      data_version: {dtype: str, nullable: false, pattern: '^data-v\d+'}
+    checks: [deposits_sector_all]

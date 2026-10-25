@@ -1,0 +1,4 @@
+event_id,district_id,source,flooded_km2,flooded_share,mapped_share,flooded_built_share,flooded_crop_share,duration_days,clear_view_share,data_version
+FL-2018-KER,595,gfd,210.5,0.0686,1.0,0.05,0.09,4.2,0.61,toy
+FL-2018-KER,598,gfd,402.0,0.2843,1.0,0.31,0.35,6.8,0.58,toy
+FL-2018-KER,599,gfd,95.0,0.0358,1.0,,,3.1,0.40,toy

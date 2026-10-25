@@ -1,0 +1,6 @@
+district_id,name,state,state_code,population,area_km2,urban_share,split_flag,geometry
+588,Kasaragod,Kerala,32,1307375,1992.0,0.39,False,"MULTIPOLYGON (((74.9 12.0, 75.4 12.0, 75.4 12.8, 74.9 12.8, 74.9 12.0)))"
+594,Thrissur,Kerala,32,3121200,3032.0,0.67,False,"MULTIPOLYGON (((75.9 10.3, 76.6 10.3, 76.6 10.8, 75.9 10.8, 75.9 10.3)))"
+595,Ernakulam,Kerala,32,3282388,3068.0,0.68,False,"MULTIPOLYGON (((76.2 9.8, 76.8 9.8, 76.8 10.3, 76.2 10.3, 76.2 9.8)))"
+598,Alappuzha,Kerala,32,2127789,1414.0,0.54,False,"MULTIPOLYGON (((76.25 9.1, 76.55 9.1, 76.55 9.8, 76.25 9.8, 76.25 9.1)))"
+599,Pathanamthitta,Kerala,32,1197412,2652.0,0.11,False,"MULTIPOLYGON (((76.55 9.1, 77.2 9.1, 77.2 9.5, 76.55 9.5, 76.55 9.1)))"

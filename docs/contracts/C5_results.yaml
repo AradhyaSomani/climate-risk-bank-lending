@@ -1,0 +1,55 @@
+contract: C5
+name: results
+version: 0.1.0
+producer: B
+consumer: A
+description: >
+  Event-study effects (Phase 3) and stress-test results (Phase 4) that the API and
+  dashboard read. Every number ships with its interval; there is no column for a
+  point estimate on its own.
+tables:
+  effects:
+    file: data/processed/effects.parquet
+    sample: tests/fixtures/contracts/effects.csv
+    primary_key: [event_id, estimator, outcome, bank_group, sector, window_start, window_end]
+    columns:
+      event_id: {dtype: str, nullable: false, description: C4 event id, or "pooled" for estimates across events}
+      estimator: {dtype: str, nullable: false, allowed: [twfe, callaway_santanna, sun_abraham, did_imputation, synthetic_did, local_projection, causal_forest]}
+      outcome: {dtype: str, nullable: false, allowed: [log_credit, log_deposits, cd_ratio, credit_growth, deposit_growth]}
+      bank_group: {dtype: str, nullable: false, allowed: [all, sbi, nationalised, private, foreign, rrb, sfb, payments, public]}
+      sector: {dtype: str, nullable: false}
+      window_start: {dtype: int, nullable: false, min: -20, max: 20, description: First event-time quarter, 0 is the impact quarter}
+      window_end: {dtype: int, nullable: false, min: -20, max: 20}
+      estimate: {dtype: float, nullable: false, description: Log points for log outcomes, percentage points for ratios}
+      ci_low: {dtype: float, nullable: false}
+      ci_high: {dtype: float, nullable: false}
+      ci_level: {dtype: float, nullable: false, min: 0.5, max: 0.999}
+      n_treated: {dtype: int, nullable: false, min: 1}
+      n_control: {dtype: int, nullable: false, min: 1}
+      pre_trend_p: {dtype: float, nullable: true, min: 0, max: 1}
+      primary: {dtype: bool, nullable: false, description: True only for the pre-registered primary specification}
+      code_version: {dtype: str, nullable: false}
+      data_version: {dtype: str, nullable: false, pattern: '^data-v\d+'}
+    checks: [interval_contains_estimate, window_ordered]
+  stress_results:
+    file: data/processed/stress_results.parquet
+    sample: tests/fixtures/contracts/stress_results.csv
+    primary_key: [scenario_id, bank_group, metric, horizon]
+    columns:
+      scenario_id: {dtype: str, nullable: false}
+      hypothetical: {dtype: bool, nullable: false, description: True for any scenario that is not a replay of an observed event}
+      bank_group: {dtype: str, nullable: false, allowed: [all, sbi, nationalised, private, foreign, rrb, sfb, payments, public]}
+      metric: {dtype: str, nullable: false, allowed: [d_credit, d_deposits, d_cd_ratio]}
+      horizon: {dtype: str, nullable: false, allowed: [q0_3, q4_7, q8_11]}
+      unit: {dtype: str, nullable: false, allowed: [pct, crore, pp]}
+      median: {dtype: float, nullable: false}
+      lower: {dtype: float, nullable: false}
+      upper: {dtype: float, nullable: false}
+      interval_level: {dtype: float, nullable: false, min: 0.5, max: 0.999}
+      var_share_effect: {dtype: float, nullable: true, min: 0, max: 1}
+      var_share_hazard: {dtype: float, nullable: true, min: 0, max: 1}
+      var_share_exposure: {dtype: float, nullable: true, min: 0, max: 1}
+      var_share_generator: {dtype: float, nullable: true, min: 0, max: 1}
+      code_version: {dtype: str, nullable: false}
+      data_version: {dtype: str, nullable: false, pattern: '^data-v\d+'}
+    checks: [interval_contains_median, var_shares_sum_to_one]

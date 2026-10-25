@@ -1,0 +1,27 @@
+# Phase 2B-B U-Net flood mapper. First full run: docs/model_cards/flood_cnn.md
+data:
+  dataset: sen1floods11            # data/raw/s1_labels (gs://sen1floods11/v1.1)
+  patch: 256                       # chips are 512x512 at 10 m; cut into four patches
+  min_valid_share: 0.5             # drop patches with more than half the label as no data
+  channels: [vv, vh]               # add "dem" or "slope" for the terrain ablation
+  # splits by event, never by random patch. India is held out entirely so the Kerala 2018
+  # cross-domain check has no Indian training data; Bolivia is the dataset's usual test event.
+  test_events: [India, Bolivia]
+  val_events: [Sri-Lanka]
+model:
+  base_channels: 16                # the run that passed; 32 and 64 are the larger ablations
+  depth: 4
+train:
+  epochs: 15                       # CPU budget; the best validation epoch is kept
+  batch_size: 16
+  lr: 0.001
+  weight_decay: 0.0001
+  dice_weight: 0.5                 # loss = dice_weight * dice + (1 - dice_weight) * CE
+  class_weights: auto              # inverse frequency of water and dry pixels in train
+  augment: true                    # flips and 90-degree rotations
+  seed: 42
+gate:
+  metric: iou_water                # per held-out event, then averaged over events
+  baselines: [otsu_vh, otsu_vv, fixed_vh, fixed_vv]  # fixed = one threshold fitted on train;
+                                   # change detection needs a pre-event scene (Earth Engine)
+  margin: 0.0

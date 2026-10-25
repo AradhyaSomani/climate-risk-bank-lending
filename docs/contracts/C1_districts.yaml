@@ -1,0 +1,37 @@
+contract: C1
+name: districts
+version: 0.1.0
+producer: B
+consumer: A
+description: >
+  The fixed district geography for the whole project (Census 2011, 640 districts)
+  and the map from every district name that appears in the RBI tables to it.
+tables:
+  district_master:
+    file: data/processed/district_master.parquet
+    sample: tests/fixtures/contracts/district_master.csv
+    primary_key: [district_id]
+    columns:
+      district_id: {dtype: int, nullable: false, min: 1, max: 999, description: Census 2011 district code}
+      name: {dtype: str, nullable: false, description: Census 2011 district name}
+      state: {dtype: str, nullable: false, description: State or UT name as in Census 2011}
+      state_code: {dtype: int, nullable: false, min: 1, max: 35, description: Census 2011 state code}
+      population: {dtype: int, nullable: false, min: 1, description: Census 2011 total population}
+      area_km2: {dtype: float, nullable: false, min: 0, description: Area computed from geometry in an equal-area projection}
+      urban_share: {dtype: float, nullable: true, min: 0, max: 1, description: Urban population over total, Census 2011}
+      split_flag: {dtype: bool, nullable: false, description: True if the district was later split in a way population weights approximate poorly}
+      geometry: {dtype: geometry, nullable: false, description: "MultiPolygon, EPSG:4326 (GeoParquet in the real file, WKT in the toy sample)"}
+    checks: [row_count_640_if_full]
+  crosswalk_rbi_to_c2011:
+    file: data/processed/crosswalk_rbi_to_c2011.parquet
+    sample: tests/fixtures/contracts/crosswalk_rbi_to_c2011.csv
+    primary_key: [rbi_name, rbi_state, valid_from, district_id]
+    columns:
+      rbi_name: {dtype: str, nullable: false, description: District name exactly as written in the RBI table}
+      rbi_state: {dtype: str, nullable: false, description: State name exactly as written in the RBI table}
+      valid_from: {dtype: date, nullable: false, description: First quarter-end for which this mapping applies}
+      valid_to: {dtype: date, nullable: true, description: Last quarter-end for which it applies; empty means still valid}
+      district_id: {dtype: int, nullable: false, min: 1, max: 999, description: Census 2011 district receiving the share}
+      weight: {dtype: float, nullable: false, min: 0.000001, max: 1, description: Population share of the RBI district assigned to this 2011 district}
+      match_type: {dtype: str, nullable: false, allowed: [exact, normalized, fuzzy, manual, split], description: How the name was matched}
+    checks: [weights_sum_to_one, valid_to_after_valid_from]

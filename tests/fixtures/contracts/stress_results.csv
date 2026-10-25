@@ -1,0 +1,3 @@
+scenario_id,hypothetical,bank_group,metric,horizon,unit,median,lower,upper,interval_level,var_share_effect,var_share_hazard,var_share_exposure,var_share_generator,code_version,data_version
+replay-CY-2019-FANI,False,all,d_credit,q0_3,pct,0.4,-0.6,1.5,0.9,0.7,0.1,0.2,0.0,toy,data-v0-toy
+scaled-CY-2019-FANI-x1.5,True,rrb,d_credit,q0_3,pct,-1.1,-3.0,0.7,0.9,0.55,0.25,0.1,0.1,toy,data-v0-toy
