@@ -22,3 +22,6 @@ cyclone:
   partial_grade: CS
 exclusion:
   neighbours: true             # districts sharing a border with a treated district
+# an EM-DAT record belongs to an event when it has the same hazard type, shares a state,
+# and carries the event's IMD storm id or overlaps its dates within this many days
+emdat_slack_days: 3

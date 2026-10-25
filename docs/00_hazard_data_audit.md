@@ -14,7 +14,7 @@ panel check is Person B's (`docs/00_rbi_audit.md`).
 | JRC Global Surface Water 1.4 | Yes: public bucket `global-surface-water`, occurrence tile 70E_10N | 1984-2021 | 30 m | Copernicus: free, no restriction, cite | Usable for permanent water |
 | Copernicus DEM GLO-90 | Yes: AWS open data `copernicus-dem-90m` | Global | 90 m | Copernicus DEM licence (free, attribution) | Usable for elevation, slope and a HAND proxy |
 | ESA WorldCover 2021 | Yes: AWS open data `esa-worldcover` | 2020 and 2021 maps | 10 m | CC BY 4.0 | Usable for built-up and cropland masks |
-| EM-DAT | No: needs a registered account | 1900 onwards | Event, admin units | Free non-commercial, no redistribution of the raw file | Needs the user to register and download |
+| EM-DAT | No: needs a registered account | 1900 onwards | Event, admin units | Free non-commercial, no redistribution of the raw file | Downloaded 2026-10-25 (2000 to 2026); see `docs/data_cards/emdat.md` |
 | NRSC flood hazard atlas | No download route found | Bihar complete; Odisha, West Bengal, Uttar Pradesh in progress | District | Not stated | Validation only, if obtained |
 | District boundaries (DataMeet Census 2011) | Yes: `datameet/maps`, 641 polygons, Census 2011 codes | All of India, 2011 | Vector | CC BY 4.0 | Usable as the geometry until B's `district_master` (C1) lands |
 
@@ -49,9 +49,10 @@ panel check is Person B's (`docs/00_rbi_audit.md`).
 
 `data/events/events_candidates.csv` lists the 15 candidate events from the task list with the
 matching GFD event id and IMD storm id. Cyclone dates are the first and last best-track fix;
-flood dates are the GFD window. Two remain unverified (Kerala 2018, Uttarakhand 2013) because
-neither source covers them; both need EM-DAT. Treated-district counts and the power check
-are filled in once footprints exist (Phase 1E, 1F) and are Person B's call.
+flood dates are the GFD window. Kerala 2018 and Uttarakhand 2013 are in neither source; their
+press-report dates were checked against EM-DAT on 2026-10-25 (2018-0295-IND and
+2013-0192-IND) and kept. Treated-district counts and the power check are filled in once
+footprints exist (Phase 1E, 1F) and are Person B's call.
 
 ## How to reproduce
 

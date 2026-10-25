@@ -1,0 +1,171 @@
+# Names that later sources (EM-DAT, GADM, news text) use for places that are a different
+# district, or a differently spelled one, in the Census 2011 district map.
+#
+# states: a state formed or renamed after 2011 -> the Census 2011 state that held it.
+# districts: per Census 2011 state, later name -> Census 2011 district name. A district
+# carved out after 2011 maps to the district it was carved from (the main parent when
+# there were several), so a record about it lands on the 2011 polygon that holds it.
+# Every target must be a district name in the boundary file; tests/ingest/test_emdat.py
+# checks this whenever the boundaries are present.
+
+states:
+  Telangana: Andhra Pradesh        # split from Andhra Pradesh in 2014
+  Ladakh: Jammu & Kashmir          # union territory since 2019
+
+districts:
+  Andhra Pradesh:
+    Nellore: Sri Potti Sriramulu Nellore
+    SPSR Nellore: Sri Potti Sriramulu Nellore
+    Kadapa: Y.S.R.
+    YSR Kadapa: Y.S.R.
+    Cuddapah: Y.S.R.
+    Ranga Reddy: Rangareddy
+    Konaseema: East Godavari       # 2022
+    Kakinada: East Godavari        # 2022
+    Mulugu: Warangal               # Telangana, 2019
+    Jayashankar Bhupalpally: Warangal      # Telangana, 2016
+    Warangal Rural: Warangal       # Telangana, 2016
+    Warangal Urban: Warangal       # Telangana, 2016
+    Bhadradri Kothagudem: Khammam  # Telangana, 2016
+  Arunanchal Pradesh:
+    Namsai: Lohit                  # 2014
+  Assam:
+    Bajali: Barpeta                # 2020
+    Biswanath: Sonitpur            # 2015
+    Charaideo: Sivasagar           # 2015
+    Hojai: Nagaon                  # 2015
+    Majuli: Jorhat                 # 2016
+    Morigaon: Marigaon
+    Sibsagar: Sivasagar
+  Chhattisgarh:
+    Balod: Durg                    # 2012
+    Bemetara: Durg                 # 2012
+    Baloda Bazar: Raipur           # 2012
+    Gariaband: Raipur              # 2012
+    Mungeli: Bilaspur              # 2012
+    Kondagaon: Bastar              # 2012
+    Sukma: Dakshin Bastar Dantewada        # 2012
+    Surajpur: Surguja              # 2012
+    Dantewada: Dakshin Bastar Dantewada
+    Kanker: Uttar Bastar Kanker
+    Kabirdham: Kabeerdham
+    Kawardha: Kabeerdham
+  Gujarat:
+    Aravalli: Sabar Kantha         # 2013
+    Botad: Bhavnagar               # 2013
+    Chhota Udaipur: Vadodara       # 2013
+    Devbhumi Dwarka: Jamnagar      # 2013
+    Gir Somnath: Junagadh          # 2013
+    Mahisagar: Panch Mahals        # 2013
+    Morbi: Rajkot                  # 2013
+    Ahmedabad: Ahmadabad
+    Dahod: Dohad
+    Mehsana: Mahesana
+    Kutch: Kachchh
+  Jammu & Kashmir:
+    Poonch: Punch
+    Baramulla: Baramula
+    Shopian: Shupiyan
+    Budgam: Badgam
+  Madhya Pradesh:
+    Agar Malwa: Shajapur           # 2013
+    Niwari: Tikamgarh              # 2018
+    Khandwa: East Nimar
+    Khargone: West Nimar
+    Narsinghpur: Narsimhapur
+  Maharashtra:
+    Palghar: Thane                 # 2014
+    Mumbai City: Mumbai
+    Raigad: Raigarh
+    Beed: Bid
+    Buldhana: Buldana
+    Gadchiroli: Garhchiroli
+    Gondia: Gondiya
+  Meghalaya:
+    North Garo Hills: East Garo Hills      # 2012
+    South West Garo Hills: West Garo Hills # 2012
+    East Jaintia Hills: Jaintia Hills      # 2012
+    West Jaintia Hills: Jaintia Hills      # 2012
+    South West Khasi Hills: West Khasi Hills       # 2012
+    Eastern West Khasi Hills: West Khasi Hills     # 2021
+  Odisha:
+    Angul: Anugul
+    Balasore: Baleshwar
+    Boudh: Bauda
+    Deogarh: Debagarh
+    Jajpur: Jajapur
+    Keonjhar: Kendujhar
+    Nabarangpur: Nabarangapur
+    Sonepur: Subarnapur
+  Rajasthan:
+    Jalore: Jalor
+    Chittorgarh: Chittaurgarh
+    Dholpur: Dhaulpur
+    Jhunjhunu: Jhunjhunun
+    Sri Ganganagar: Ganganagar
+  Sikkim:
+    North Sikkim: North
+    Mangan: North                  # North Sikkim's name since 2021
+    East Sikkim: East
+    Gangtok: East
+    Pakyong: East                  # 2021
+    South Sikkim: South
+    Namchi: South
+    West Sikkim: West
+    Gyalshing: West
+    Soreng: West                   # 2021
+  Tamil Nadu:
+    Ooty: The Nilgiris
+    Chengalpattu: Kancheepuram     # 2019
+    Kallakurichi: Viluppuram       # 2019
+    Tenkasi: Tirunelveli           # 2019
+    Ranipet: Vellore               # 2019
+    Tirupathur: Vellore            # 2019
+    Mayiladuthurai: Nagappattinam  # 2020
+    Nagapattinam: Nagappattinam
+    Kanchipuram: Kancheepuram
+    Kanyakumari: Kanniyakumari
+    Tuticorin: Thoothukkudi
+    Thoothukudi: Thoothukkudi
+    Tiruvallur: Thiruvallur
+    Tiruvarur: Thiruvarur
+    Tiruchirapalli: Tiruchirappalli
+    Virudhunagar: Virudunagar
+  Tripura:
+    Gomati: South Tripura          # 2012
+    Sipahijala: West Tripura       # 2012
+    Khowai: West Tripura           # 2012
+    Unakoti: North Tripura         # 2012
+  Uttar Pradesh:
+    Prayagraj: Allahabad           # renamed 2018
+    Ayodhya: Faizabad              # renamed 2018
+    Amroha: Jyotiba Phule Nagar
+    Hathras: Mahamaya Nagar
+    Kasganj: Kansiram Nagar
+    Bhadohi: Sant Ravi Das Nagar(Bhadohi)
+    Lakhimpur Kheri: Kheri
+    Shravasti: Shrawasti
+    Shamli: Muzaffarnagar          # 2011, after the census
+    Sambhal: Moradabad             # 2011, after the census
+    Hapur: Ghaziabad               # 2011, after the census
+    Barabanki: Bara Banki
+    Raebareli: Rae Bareli
+    Gautam Buddh Nagar: Gautam Buddha Nagar
+  Uttarakhand:
+    Pauri Garhwal: Garhwal
+    Haridwar: Hardwar
+  West Bengal:
+    Alipurduar: Jalpaiguri         # 2014
+    Kalimpong: Darjiling           # 2017
+    Jhargram: Pashchim Medinipur   # 2017
+    Paschim Bardhaman: Barddhaman  # 2017
+    Purba Bardhaman: Barddhaman    # 2017
+    Darjeeling: Darjiling
+    Paschim Medinipur: Pashchim Medinipur
+    Bardhaman: Barddhaman
+    Burdwan: Barddhaman
+    Cooch Behar: Koch Bihar
+    Howrah: Haora
+    Hooghly: Hugli
+    Malda: Maldah
+    Purulia: Puruliya

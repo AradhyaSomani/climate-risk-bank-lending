@@ -36,3 +36,25 @@ def test_cyclone_rules():
     assert rows.heavily_treated.tolist() == [True, False, False, False]
     out = cat.finish(rows, None, use_neighbours=False)
     assert out.set_index("district_id").excluded.to_dict() == {1: False, 2: False, 3: True}
+
+
+def test_emdat_links_by_storm_id_or_dates_within_shared_states():
+    cand = pd.DataFrame({
+        "event_id": ["CY-A", "FL-B", "FL-C"], "type": ["cyclone", "flood", "flood"],
+        "start_date": ["2019-04-26", "2018-08-08", "2010-07-01"],
+        "end_date": ["2019-05-04", "2018-08-20", "2010-07-05"],
+        "states": ["Odisha;West Bengal", "Kerala", "Assam"],
+        "imd_storm_id": ["2019-002", None, None],
+    })
+    records = pd.DataFrame({
+        "disno": ["1", "1", "2", "3", "4"],
+        "hazard_type": ["cyclone", "cyclone", "flood", "flood", "flood"],
+        "state": ["Odisha", "Andhra Pradesh", "Kerala", "Bihar", "Kerala"],
+        # record 1 starts after the event ends but carries its storm id
+        "start_date": pd.to_datetime(["2019-05-10"] * 2 + ["2018-08-07", "2018-08-10",
+                                                          "2018-09-30"]),
+        "end_date": pd.to_datetime(["2019-05-10"] * 2 + ["2018-08-20", "2018-08-12", None]),
+        "imd_event_id": ["IMD-2019-002"] * 2 + [None] * 3,
+    })
+    # record 3 overlaps FL-B's dates but not its state; record 4 is too late
+    assert cat.emdat_links(cand, records, slack_days=3) == {"CY-A": "1", "FL-B": "2"}

@@ -14,6 +14,14 @@ landfall for cyclones and of the start date for floods. Events with no footprint
 2018, Uttarakhand 2013) stay in `events.parquet` with the reason in `source`, and have no
 district rows until a footprint exists.
 
+`emdat_id` lists the EM-DAT records (DisNo., `;`-separated) of the same hazard type that
+share a state with the event and either carry its IMD storm id or overlap its dates within
+`emdat_slack_days`. It stays empty when disaster_records.parquet has not been built. The
+linked records' dates, deaths, people affected and damage, as EM-DAT reports them, go to
+`event_emdat.parquet`. The damage figures are estimates, and a record that names several
+states (Kerala 2018 shares one with Assam and Maharashtra) reports their combined impacts.
+That table is never published, because EM-DAT's terms forbid redistributing its records.
+
     python -m cri.events.catalogue
 """
 
@@ -89,6 +97,45 @@ def finish(rows: pd.DataFrame, edges: pd.DataFrame | None, use_neighbours: bool)
     return rows.reset_index(drop=True)
 
 
+def emdat_links(cand: pd.DataFrame, records: pd.DataFrame, slack_days: int) -> dict[str, str]:
+    """event_id -> EM-DAT DisNo. values joined with ';' (see the module docstring)."""
+    rec = records.dropna(subset=["state"]).groupby("disno").agg(
+        hazard_type=("hazard_type", "first"), start=("start_date", "first"),
+        end=("end_date", "first"), imd=("imd_event_id", "first"),
+        states=("state", set))
+    rec["end"] = rec.end.fillna(rec.start)
+    slack = pd.Timedelta(days=slack_days)
+    out = {}
+    for ev in cand.itertuples():
+        start = pd.Timestamp(ev.start_date)
+        end = pd.Timestamp(ev.end_date) if isinstance(ev.end_date, str) else start
+        r = rec[rec.hazard_type == ev.type]
+        same_storm = (r.imd == f"IMD-{ev.imd_storm_id}") if isinstance(
+            ev.imd_storm_id, str) else False
+        overlap = (r.start <= end + slack) & (r.end >= start - slack)
+        ev_states = set(ev.states.split(";"))
+        shared = np.array([bool(s & ev_states) for s in r.states], dtype=bool)
+        hits = sorted(r.index[(same_storm | overlap) & shared])
+        if hits:
+            out[ev.event_id] = ";".join(hits)
+    return out
+
+
+IMPACTS = ["start_date", "end_date", "date_precision", "total_deaths", "total_affected",
+           "total_damage_kusd", "total_damage_adj_kusd"]
+
+
+def write_impacts(links: dict[str, str], records: pd.DataFrame, processed: Path) -> Path:
+    """One row per event and linked EM-DAT record, with the figures as EM-DAT reports them."""
+    rec = records.drop_duplicates("disno").set_index("disno")[IMPACTS]
+    rows = [{"event_id": ev, "disno": d, **rec.loc[d].to_dict()}
+            for ev, ids in links.items() for d in ids.split(";")]
+    path = processed / "event_emdat.parquet"
+    pd.DataFrame(rows).rename(columns={"start_date": "emdat_start", "end_date": "emdat_end"}
+                              ).to_parquet(path, index=False)
+    return path
+
+
 def build(processed: Path | None = None) -> list[Path]:
     cfg = config.load("events")
     processed = processed or config.path("processed")
@@ -105,6 +152,10 @@ def build(processed: Path | None = None) -> list[Path]:
     from cri.geo.districts import load_districts
 
     district_state = load_districts().set_index("district_id").state
+    rec_path = processed / "disaster_records.parquet"
+    records = pd.read_parquet(rec_path) if rec_path.exists() else None
+    emdat = (emdat_links(cand, records, cfg.get("emdat_slack_days", 3))
+             if records is not None else {})
     events, parts = [], []
     for ev in cand.itertuples():
         start = pd.Timestamp(ev.start_date)
@@ -139,7 +190,7 @@ def build(processed: Path | None = None) -> list[Path]:
             "start_date": start.date(),
             "end_date": pd.Timestamp(ev.end_date).date() if isinstance(ev.end_date, str) else None,
             "impact_quarter": impact.date(), "states": ev.states, "source": source,
-            "emdat_id": None,
+            "emdat_id": emdat.get(ev.event_id),
         })
     events = pd.DataFrame(events)
     for c in ("start_date", "end_date", "impact_quarter"):
@@ -159,10 +210,12 @@ def build(processed: Path | None = None) -> list[Path]:
         path = processed / f"{name}.parquet"
         df.to_parquet(path, index=False)
         out.append(path)
+    if emdat:
+        out.append(write_impacts(emdat, records, processed))
     summary = ed.groupby("event_id").agg(treated=("treated", "sum"),
                                          heavy=("heavily_treated", "sum"),
                                          excluded=("excluded", "sum"))
-    log.info("wrote %s and %s\n%s", *out, summary.to_string())
+    log.info("wrote %s\n%s", ", ".join(map(str, out)), summary.to_string())
     return out
 
 
