@@ -10,9 +10,11 @@ CREATE TABLE IF NOT EXISTS district (
   district_id   INTEGER PRIMARY KEY,        -- Census 2011 district code
   name          TEXT NOT NULL,
   state         TEXT NOT NULL,
+  state_code    SMALLINT,
   population    INTEGER,
   area_km2      REAL,
   urban_share   REAL,
+  split_flag    BOOLEAN NOT NULL DEFAULT FALSE,
   geom          GEOMETRY(MultiPolygon, 4326) NOT NULL
 );
 CREATE INDEX IF NOT EXISTS district_geom_idx ON district USING GIST (geom);
@@ -24,6 +26,7 @@ CREATE TABLE IF NOT EXISTS district_crosswalk (
   valid_to      DATE,
   district_id   INTEGER NOT NULL REFERENCES district,
   weight        REAL NOT NULL CHECK (weight > 0 AND weight <= 1),
+  match_type    TEXT,                       -- exact | normalized | fuzzy | manual | split
   PRIMARY KEY (rbi_name, rbi_state, valid_from, district_id)
 );
 
@@ -42,8 +45,10 @@ CREATE TABLE IF NOT EXISTS credit_deposit (
   measure       TEXT NOT NULL CHECK (measure IN ('credit','deposits')),
   sector        TEXT NOT NULL,
   amount_cr     DOUBLE PRECISION,           -- rupees crore, nominal
+  n_offices     INTEGER,
   series_break  BOOLEAN NOT NULL DEFAULT FALSE,
   split_flag    BOOLEAN NOT NULL DEFAULT FALSE,
+  imputed_share REAL CHECK (imputed_share BETWEEN 0 AND 1),
   data_version  TEXT NOT NULL,
   PRIMARY KEY (district_id, quarter_end, bank_group, measure, sector)
 );
@@ -105,7 +110,7 @@ CREATE TABLE IF NOT EXISTS exposure (
 );
 
 CREATE TABLE IF NOT EXISTS effect (
-  event_id      TEXT REFERENCES hazard_event,    -- NULL for pooled
+  event_id      TEXT NOT NULL,                  -- C4 event id, or 'pooled'
   estimator     TEXT NOT NULL,
   outcome       TEXT NOT NULL,
   bank_group    TEXT NOT NULL,
@@ -115,10 +120,13 @@ CREATE TABLE IF NOT EXISTS effect (
   estimate      DOUBLE PRECISION NOT NULL,
   ci_low        DOUBLE PRECISION NOT NULL,
   ci_high       DOUBLE PRECISION NOT NULL,
+  ci_level      REAL,
   n_treated     INTEGER NOT NULL,
   n_control     INTEGER NOT NULL,
   pre_trend_p   REAL,
-  code_version  TEXT NOT NULL
+  is_primary    BOOLEAN NOT NULL DEFAULT FALSE,  -- C5 `primary` (a reserved word in SQL)
+  code_version  TEXT NOT NULL,
+  data_version  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS scenario (
@@ -141,17 +149,21 @@ CREATE TABLE IF NOT EXISTS scenario_district (           -- footprint of each sc
 
 CREATE TABLE IF NOT EXISTS stress_result (
   scenario_id   TEXT REFERENCES scenario,
+  hypothetical  BOOLEAN,
   bank_group    TEXT NOT NULL,
   metric        TEXT NOT NULL,                  -- d_credit | d_deposits | d_cd_ratio
   horizon       TEXT NOT NULL,                  -- q0_3 | q4_7 | q8_11
+  unit          TEXT,                           -- pct | crore | pp
   median        DOUBLE PRECISION NOT NULL,
   lower         DOUBLE PRECISION NOT NULL,
   upper         DOUBLE PRECISION NOT NULL,
+  interval_level REAL,
   var_share_effect REAL,
   var_share_hazard REAL,
   var_share_exposure REAL,
   var_share_generator REAL,
   code_version  TEXT NOT NULL,
+  data_version  TEXT,
   PRIMARY KEY (scenario_id, bank_group, metric, horizon)
 );
 
@@ -220,3 +232,18 @@ CREATE TABLE IF NOT EXISTS hazard_baseline (
 CREATE INDEX IF NOT EXISTS flood_extent_district_idx ON flood_extent (district_id);
 CREATE INDEX IF NOT EXISTS cyclone_exposure_district_idx ON cyclone_exposure (district_id);
 CREATE INDEX IF NOT EXISTS credit_deposit_quarter_idx ON credit_deposit (quarter_end);
+
+-- Upgrade a database built before B's C1, C2 and C5 columns were added (no-op on a new one)
+ALTER TABLE district ADD COLUMN IF NOT EXISTS state_code SMALLINT;
+ALTER TABLE district ADD COLUMN IF NOT EXISTS split_flag BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE district_crosswalk ADD COLUMN IF NOT EXISTS match_type TEXT;
+ALTER TABLE credit_deposit ADD COLUMN IF NOT EXISTS n_offices INTEGER;
+ALTER TABLE credit_deposit ADD COLUMN IF NOT EXISTS imputed_share REAL;
+ALTER TABLE effect DROP CONSTRAINT IF EXISTS effect_event_id_fkey;
+ALTER TABLE effect ADD COLUMN IF NOT EXISTS ci_level REAL;
+ALTER TABLE effect ADD COLUMN IF NOT EXISTS is_primary BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE effect ADD COLUMN IF NOT EXISTS data_version TEXT;
+ALTER TABLE stress_result ADD COLUMN IF NOT EXISTS hypothetical BOOLEAN;
+ALTER TABLE stress_result ADD COLUMN IF NOT EXISTS unit TEXT;
+ALTER TABLE stress_result ADD COLUMN IF NOT EXISTS interval_level REAL;
+ALTER TABLE stress_result ADD COLUMN IF NOT EXISTS data_version TEXT;

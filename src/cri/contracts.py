@@ -2,7 +2,11 @@
 
 Each contract lists one or more tables with column types, ranges, allowed values, a primary
 key and table-level checks. `validate_frame` returns a list of human-readable problems; an
-empty list means the table satisfies the contract.
+empty list means the table satisfies the contract. It never fixes anything.
+
+A table check is either a dict with a `kind` (sum_to_one, ordered, ...) or the name of a rule
+in `TABLE_CHECKS`. Checks that only make sense on the complete table (the 640-district row
+count) are skipped when `full=False`, which is how the toy samples are validated.
 
     python -m cri.contracts --samples              # validate every toy sample
     python -m cri.contracts C3 flood_extent_district_event path/to/file.parquet
@@ -34,6 +38,7 @@ class TableSpec:
     checks: list[dict] = field(default_factory=list)
     file: str | None = None
     sample: str | None = None
+    version: str | None = None
 
 
 def load_contracts(contract_dir: Path = CONTRACT_DIR) -> dict[str, dict[str, TableSpec]]:
@@ -55,6 +60,7 @@ def load_contracts(contract_dir: Path = CONTRACT_DIR) -> dict[str, dict[str, Tab
                 checks=t.get("checks", []),
                 file=t.get("file"),
                 sample=t.get("sample"),
+                version=doc.get("version"),
             )
     return out
 
@@ -108,7 +114,7 @@ def _type_ok(series: pd.Series, dtype: str) -> bool:
     return False
 
 
-def validate_frame(df: pd.DataFrame, spec: TableSpec) -> list[str]:
+def validate_frame(df: pd.DataFrame, spec: TableSpec, full: bool = True) -> list[str]:
     errs: list[str] = []
     where = f"{spec.contract}.{spec.name}"
 
@@ -139,6 +145,11 @@ def validate_frame(df: pd.DataFrame, spec: TableSpec) -> list[str]:
                 errs.append(f"{where}.{col}: {int(low.sum())} values below {cs['min']}")
         if "max" in cs and len(nn) and (nn > cs["max"]).any():
             errs.append(f"{where}.{col}: {int((nn > cs['max']).sum())} values above {cs['max']}")
+        if "pattern" in cs and len(nn):
+            nomatch = ~nn.astype(str).str.match(cs["pattern"])
+            if nomatch.any():
+                errs.append(f"{where}.{col}: {int(nomatch.sum())} values do not match "
+                            f"{cs['pattern']}")
         if cs.get("quarter_end") and len(nn):
             d = pd.to_datetime(nn)
             not_qe = ~(d.dt.is_quarter_end & (d.dt.normalize() == d))
@@ -151,9 +162,87 @@ def validate_frame(df: pd.DataFrame, spec: TableSpec) -> list[str]:
         if dup.any():
             errs.append(f"{where}: {int(dup.sum())} rows share a primary key {pk}")
 
-    for chk in spec.checks:
-        errs.extend(_run_check(df, chk, where))
+    if not missing:
+        for chk in spec.checks:
+            if isinstance(chk, str):
+                if chk not in TABLE_CHECKS:
+                    errs.append(f"{where}: unknown check {chk}")
+                    continue
+                errs.extend(f"{where}: {e}" for e in TABLE_CHECKS[chk](df, full))
+            else:
+                errs.extend(_run_check(df, chk, where))
     return errs
+
+
+# Named table checks (B's contracts C1, C2, C5) ------------------------------
+
+WEIGHT_TOL = 1e-6
+
+
+def _row_count_640_if_full(df, full):
+    if full and len(df) != 640:
+        return [f"district_master has {len(df)} rows, expected 640 Census 2011 districts"]
+    return []
+
+
+def _weights_sum_to_one(df, full):
+    sums = df.groupby(["rbi_name", "rbi_state", "valid_from"])["weight"].sum()
+    bad = sums[(sums - 1).abs() > WEIGHT_TOL]
+    if len(bad):
+        return [f"crosswalk weights do not sum to 1 for {len(bad)} source rows, e.g. "
+                f"{bad.index[0]} sums to {bad.iloc[0]:.6f}"]
+    return []
+
+
+def _valid_to_after_valid_from(df, full):
+    vf = pd.to_datetime(df["valid_from"], format="mixed")
+    vt = pd.to_datetime(df["valid_to"], format="mixed")
+    bad = vt.notna() & (vt < vf)
+    return [f"valid_to before valid_from in {int(bad.sum())} rows"] if bad.any() else []
+
+
+def _deposits_sector_all(df, full):
+    bad = (df["measure"] == "deposits") & (df["sector"] != "all")
+    return [f"{int(bad.sum())} deposit rows have a sector other than 'all'"] if bad.any() else []
+
+
+def _interval_contains(point):
+    lo, hi = ("ci_low", "ci_high") if point == "estimate" else ("lower", "upper")
+
+    def check(df, full):
+        bad = ~((df[lo] <= df[point]) & (df[point] <= df[hi]))
+        if bad.any():
+            return [f"{int(bad.sum())} rows where {point} is outside [{lo}, {hi}]"]
+        return []
+
+    return check
+
+
+def _window_ordered(df, full):
+    bad = df["window_start"] > df["window_end"]
+    return [f"{int(bad.sum())} rows with window_start after window_end"] if bad.any() else []
+
+
+def _var_shares_sum_to_one(df, full):
+    cols = ["var_share_effect", "var_share_hazard", "var_share_exposure", "var_share_generator"]
+    shares = df[cols]
+    present = shares.notna().all(axis=1)
+    bad = present & ((shares.sum(axis=1) - 1).abs() > 0.01)
+    if bad.any():
+        return [f"{int(bad.sum())} rows where the variance shares do not sum to 1"]
+    return []
+
+
+TABLE_CHECKS = {
+    "row_count_640_if_full": _row_count_640_if_full,
+    "weights_sum_to_one": _weights_sum_to_one,
+    "valid_to_after_valid_from": _valid_to_after_valid_from,
+    "deposits_sector_all": _deposits_sector_all,
+    "interval_contains_estimate": _interval_contains("estimate"),
+    "interval_contains_median": _interval_contains("median"),
+    "window_ordered": _window_ordered,
+    "var_shares_sum_to_one": _var_shares_sum_to_one,
+}
 
 
 def _run_check(df: pd.DataFrame, chk: dict, where: str) -> list[str]:
@@ -199,7 +288,8 @@ def validate_samples() -> dict[str, list[str]]:
             if not spec.sample:
                 results[key] = ["no sample file declared"]
                 continue
-            results[key] = validate_frame(read_table(REPO_ROOT / spec.sample, spec), spec)
+            results[key] = validate_frame(read_table(REPO_ROOT / spec.sample, spec), spec,
+                                          full=False)
     return results
 
 

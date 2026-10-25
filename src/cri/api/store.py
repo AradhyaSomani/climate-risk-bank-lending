@@ -135,10 +135,15 @@ class PostgresStore:
             return pd.DataFrame(cur.fetchall(), columns=cols)
 
     def table(self, resource: str) -> pd.DataFrame:
-        df = self._query(f"SELECT * FROM {RESOURCES[resource].db_table}")  # names are ours
+        from cri.db.load import TARGETS
+
+        table = RESOURCES[resource].db_table
+        df = self._query(f"SELECT * FROM {table}")  # names are ours
         if df.empty:
-            raise Missing(f"{RESOURCES[resource].db_table} is empty")
-        return df
+            raise Missing(f"{table} is empty")
+        # undo the loader's renames (C5 `primary` is stored as is_primary)
+        back = {v: k for t in TARGETS if t.table == table for k, v in t.rename.items()}
+        return df.rename(columns=back)
 
     def districts(self) -> pd.DataFrame:
         import geopandas as gpd

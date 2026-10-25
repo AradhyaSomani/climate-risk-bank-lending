@@ -58,7 +58,7 @@ TARGETS = [
     Target("hazard_baseline", "hazard_baseline_district.parquet", ["district_id"]),
     Target("exposure", "exposure.parquet",
            ["quarter_end", "bank_group", "sector", "tier", "route"]),
-    Target("effect", "effects.parquet", []),
+    Target("effect", "effects.parquet", [], rename={"primary": "is_primary"}),
     Target("scenario", "scenarios.parquet", ["scenario_id"]),
     Target("scenario_district", "scenario_district.parquet", ["scenario_id", "district_id"]),
     Target("stress_result", "stress_results.parquet",
