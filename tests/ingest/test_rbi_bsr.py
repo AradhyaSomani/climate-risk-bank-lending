@@ -103,3 +103,32 @@ def test_missing_unit_is_an_error(tmp_path):
     pd.DataFrame(rows).to_csv(f, header=False, index=False)
     with pytest.raises(ValueError, match="unit"):
         read_district_table(f)
+
+
+def test_wide_statement_with_one_block_per_period(tmp_path):
+    # The DBIE Statement 4A layout: a title that names both "State" and "District",
+    # a period label over each block, and offices, deposit and credit under it
+    f = tmp_path / "statement_4a.xlsx"
+    _write_xlsx(f, [
+        [None, "Statement No.4A : District wise Aggregate Deposit and Bank Credit of "
+               "Scheduled Commercial Banks", None, None, None, None, None, None, None],
+        [None, "(Amount in ₹ Crores)", None, None, None, None, None, None, None],
+        [None, "Region", "State or UTs", "District", "2025-26:Q4", None, None,
+         "2024-25:Q4", None],
+        [None, None, None, None, "Number of\nReporting\nOffices", "Deposit", "Credit",
+         "Deposit", "Credit"],
+        [None, "SOUTHERN REGION", "KERALA", "IDUKKI", 218, 16180.07, 9000.5, 15000.0, None],
+        [None, None, "KERALA", None, 7000, 900000.0, 700000.0, 850000.0, 650000.0],
+        [None, "ALL-INDIA", None, None, 168428, 1.0e7, 9.0e6, 9.5e6, 8.5e6],
+    ])
+    out = read_district_table(f)
+    assert sorted(out.quarter_end.unique()) == [pd.Timestamp("2025-03-31"),
+                                                pd.Timestamp("2026-03-31")]
+    assert set(out.rbi_district) == {"IDUKKI"}  # state and all-India totals dropped
+    dep = out[(out.measure == "deposits") & (out.quarter_end == "2026-03-31")].iloc[0]
+    assert dep.amount_cr == pytest.approx(16180.07)
+    assert dep.n_offices == 218
+    older = out[(out.measure == "deposits") & (out.quarter_end == "2025-03-31")]
+    assert older.n_offices.isna().all()  # that block has no offices column
+    blank = out[(out.measure == "credit") & (out.quarter_end == "2025-03-31")]
+    assert blank.amount_cr.isna().all()

@@ -7,7 +7,9 @@ may hold one quarter or several. This reader therefore:
 - finds the header row by looking for "state" and "district" in the first rows,
 - maps columns by keywords (see COLUMN_KEYWORDS),
 - reads the unit from the title rows or headers unless one is given,
-- takes the quarter from a period column, from the file name, or from the caller.
+- takes the quarter from a period column, from the file name, or from the caller,
+- reads the wide DBIE statements too (Statement 4A), where each period is a block of
+  columns under a label such as "2022-23:Q4" with offices, deposit and credit below it.
 
 Output columns (Phase 1 C long format, before the crosswalk):
 quarter_end, rbi_state, rbi_district, bank_group, measure, sector,
@@ -112,9 +114,13 @@ def _read_raw(path: Path) -> pd.DataFrame:
 
 
 def _find_header_row(raw: pd.DataFrame, max_rows: int = 30) -> int:
+    # Header cells are short; a title such as "Statement No.4A : District wise ..."
+    # names both words in one long cell and is not the header
     for i in range(min(max_rows, len(raw))):
-        cells = " | ".join(str(c).lower() for c in raw.iloc[i] if pd.notna(c))
-        if "district" in cells and "state" in cells:
+        cells = [str(c).lower() for c in raw.iloc[i] if pd.notna(c) and len(str(c)) < 40]
+        districts = {k for k, c in enumerate(cells) if "district" in c}
+        states = {k for k, c in enumerate(cells) if "state" in c}
+        if districts and states and (len(districts | states) > 1):
             return i
     raise ValueError("No header row with both 'state' and 'district' in the first rows")
 
@@ -158,9 +164,52 @@ def read_district_table(
     raw = _read_raw(path)
     h = _find_header_row(raw)
     title_rows = raw.iloc[:h].astype(str).values.ravel().tolist()
+    blocks = _period_blocks(raw, h)
+    if blocks:
+        return pd.concat(
+            [_to_long(frame, headers, title_rows, path, period if quarter_end is None
+                      else quarter_end, unit, bank_group, sector)
+             for period, headers, frame in blocks],
+            ignore_index=True)
     headers = [str(c).strip() for c in raw.iloc[h]]
     df = raw.iloc[h + 1:].copy()
     df.columns = headers
+    return _to_long(df, headers, title_rows, path, quarter_end, unit, bank_group, sector)
+
+
+def _period_blocks(raw: pd.DataFrame, h: int) -> list[tuple[str, list[str], pd.DataFrame]]:
+    """Split a wide statement into one frame per period, or return [] for a long file.
+
+    A file is wide when the header row carries period labels ("2022-23:Q4") and
+    the row below names the measures. The label stands over the first column of
+    its block; the id columns (region, state, district) are kept in every block.
+    """
+    top = raw.iloc[h]
+    periods = {j: str(v).strip() for j, v in top.items()
+               if pd.notna(v) and re.search(r"q\s*[1-4]|\d{4}", str(v), re.I)
+               and parse_quarter_end(v) is not None}
+    if not periods:
+        return []
+    first = min(periods)
+    ids = [j for j in raw.columns if j < first and pd.notna(top[j])]
+    sub = raw.iloc[h + 1]
+    blocks = []
+    starts = sorted(periods)
+    for k, start in enumerate(starts):
+        end = starts[k + 1] if k + 1 < len(starts) else raw.columns.max() + 1
+        cols = [j for j in raw.columns if start <= j < end and pd.notna(sub[j])]
+        names = [re.sub(r"\s+", " ", str(sub[j])).strip() for j in cols]
+        if len(set(names)) < len(names):
+            raise ValueError(f"Period {periods[start]!r} has repeated sub-headers {names}; "
+                             "this reader takes one deposit and one credit column per period")
+        headers = [str(top[j]).strip() for j in ids] + names
+        frame = raw.iloc[h + 2:, ids + cols].copy()
+        frame.columns = headers
+        blocks.append((periods[start], headers, frame))
+    return blocks
+
+
+def _to_long(df, headers, title_rows, path, quarter_end, unit, bank_group, sector):
     mapping = map_columns(headers)
     missing = {"rbi_state", "rbi_district"} - mapping.keys()
     if missing or not ({"deposits", "credit"} & mapping.keys()):

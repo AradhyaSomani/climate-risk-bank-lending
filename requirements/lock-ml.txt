@@ -224,6 +224,7 @@ voluptuous==0.16.0        # via dvc, dvc-studio-client
 waitress==3.0.2 ; sys_platform == 'win32'  # via mlflow
 wcwidth==0.9.4            # via prettytable, prompt-toolkit
 werkzeug==3.1.9           # via flask, flask-cors
+xlrd==2.0.2               # via cri (pyproject.toml)
 yarl==1.25.1              # via aiohttp
 zc-lockfile==4.0          # via dvc
 zipp==4.1.2               # via importlib-metadata
