@@ -28,14 +28,15 @@ def test_config_hash_changes_with_content():
     assert runlog.config_hash(["project"]) != runlog.config_hash(["hazard"])
 
 
-def test_pipeline_runs_registered_steps(tmp_path, monkeypatch):
+@pytest.mark.parametrize("as_list", [True, False])
+def test_pipeline_runs_registered_steps(tmp_path, monkeypatch, as_list):
     from cri import pipeline
 
     out = tmp_path / "out.txt"
 
     def step():
         out.write_text("x")
-        return [out]
+        return [out] if as_list else out  # cri.hazard.validation.run returns one path
 
     monkeypatch.setitem(pipeline.STAGES, "hazard", ["tests.test_config_runlog:_noop"])
     monkeypatch.setattr(pipeline, "resolve", lambda s: step)
