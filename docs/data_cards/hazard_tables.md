@@ -9,7 +9,7 @@ All in `data/processed/` (DVC, not Git). Contract columns are in `docs/contracts
 | `cyclone_storms.parquet` | storm | `cri.hazard.cyclone_footprint` | IMD best track |
 | `hazard_baseline_district.parquet` | district | `cri.hazard.baseline` | GFD, JRC GSW, Copernicus DEM, IMD |
 | `hazard_indicators.parquet` | district | `cri.hazard.indicators` | the tables above |
-| `disaster_records.parquet` | EM-DAT record x district (or state) | `cri.ingest.emdat` | EM-DAT (not yet downloaded) |
+| `disaster_records.parquet` | EM-DAT record x district (or state) | `cri.ingest.emdat` | EM-DAT export of 2026-10-25 |
 
 ## Conventions
 

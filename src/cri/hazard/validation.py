@@ -189,7 +189,6 @@ def run(out: Path = REPORT) -> Path:
     oos = pd.concat(oos, ignore_index=True) if oos else pd.DataFrame()
     parts.append(_md(oos) if len(oos) else "Pending: no hazard tables.")
     parts.append("")
-    summary = summarise(oos)
 
     parts.append("## 2. Kerala, August 2018\n")
     if inputs["flood"] is not None:
@@ -207,9 +206,15 @@ def run(out: Path = REPORT) -> Path:
     parts.append("## 3. EM-DAT records and damage by state\n")
     rec_path = processed / "disaster_records.parquet"
     scores_path = processed / score.OUT_NAME
+    em, spread = pd.DataFrame(), {}
     if rec_path.exists() and scores_path.exists():
-        parts.append(_md(emdat_states(pd.read_parquet(scores_path), pd.read_parquet(rec_path),
-                                      districts)))
+        records = pd.read_parquet(rec_path)
+        em = emdat_states(pd.read_parquet(scores_path), records, districts)
+        spread = many_states(records)
+        parts.append("A state's mean district score against the number of EM-DAT records "
+                     "naming the state and their adjusted damage ('000 US$). A record "
+                     "counts once, with its full damage, in every state it names.\n")
+        parts.append(_md(em.round(3)))
     else:
         parts.append("Pending: needs the EM-DAT export in `data/raw/emdat/` (account required), "
                      "then `python -m cri.ingest.emdat`.")
@@ -236,7 +241,7 @@ def run(out: Path = REPORT) -> Path:
         parts.append(_md(state_tiers(scores_now, districts)))
     parts.append("")
     # summary goes right after the introduction
-    parts[2:2] = ["## Summary\n", *summary, ""]
+    parts[2:2] = ["## Summary\n", *summarise(oos, em, spread), ""]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(parts))
     return out
@@ -255,8 +260,20 @@ def state_tiers(scores: pd.DataFrame, districts: pd.DataFrame) -> pd.DataFrame:
     return t.reset_index()
 
 
-def summarise(oos: pd.DataFrame) -> list[str]:
-    """Plain statements from the out-of-sample table, so the summary never drifts from it."""
+def many_states(records: pd.DataFrame, n: int = 5) -> dict[str, tuple[int, int]]:
+    """hazard -> (records naming at least `n` states, all records with a state)."""
+    k = records.dropna(subset=["state"]).groupby(["hazard_type", "disno"]).state.nunique()
+    return {hz: (int((g >= n).sum()), len(g)) for hz, g in k.groupby(level=0)}
+
+
+def _span(x: pd.Series) -> str:
+    lo, hi = x.min(), x.max()
+    return f"{lo:.2f}" if round(lo, 2) == round(hi, 2) else f"{lo:.2f} to {hi:.2f}"
+
+
+def summarise(oos: pd.DataFrame, emdat: pd.DataFrame | None = None,
+              spread: dict[str, tuple[int, int]] | None = None) -> list[str]:
+    """Plain statements from the result tables, so the summary never drifts from them."""
     lines = []
     for hz in ["flood", "cyclone"]:
         g = oos[oos.hazard == hz] if len(oos) else oos
@@ -283,8 +300,23 @@ def summarise(oos: pd.DataFrame) -> list[str]:
                  "flood-extent score cannot see. GFD observed Kerala in 24 events but never "
                  "recorded Ernakulam or Pathanamthitta above 1% flooded (MODIS misses floods "
                  "under cloud and canopy), so both sit near the median.")
-    lines.append("- EM-DAT, the NRSC atlas and the Sentinel-1 comparison are pending on data "
-                 "(sections 3 to 5).")
+    if emdat is not None and len(emdat):
+        fl, cy = emdat[emdat.hazard == "flood"], emdat[emdat.hazard == "cyclone"]
+        many, total = (spread or {}).get("flood", (0, 0))
+        lines.append(
+            f"- EM-DAT, state level (section 3): a state's mean cyclone score tracks its "
+            f"EM-DAT cyclone records (Spearman {_span(cy.spearman_records)} across the score "
+            f"versions) and damage ({_span(cy.spearman_damage)}). For floods the link is weak "
+            f"({_span(fl.spearman_records)} for records, {_span(fl.spearman_damage)} for "
+            "damage). EM-DAT counts reported disasters, which mixes hazard with exposure and "
+            "reporting"
+            + (f", and {many} of its {total} flood records name five or more states, so one "
+               "monsoon season counts in states it barely touched" if many else "") + ".")
+        lines.append("- The NRSC atlas and the Sentinel-1 comparison are pending on data "
+                     "(sections 4 and 5).")
+    else:
+        lines.append("- EM-DAT, the NRSC atlas and the Sentinel-1 comparison are pending on "
+                     "data (sections 3 to 5).")
     lines.append("- Known artefact: `flood_duration_days` is high for some central Indian "
                  "districts hit by one long GFD event, probably reservoirs below the JRC "
                  "permanent-water threshold; it carries 5% of the weighted flood score.")

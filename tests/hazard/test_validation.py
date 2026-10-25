@@ -56,3 +56,16 @@ def test_summary_states_the_comparison():
     })
     text = val.summarise(oos)[0]
     assert "loses to" in text and "0.85" in text and "better (0.70 against 0.60)" in text
+
+
+def test_summary_reports_emdat_when_present():
+    em = pd.DataFrame({
+        "hazard": ["flood"] * 3 + ["cyclone"] * 3, "score_version": ["a", "b", "c"] * 2,
+        "spearman_records": [0.1, 0.2, 0.15, 0.6, 0.6, 0.6],
+        "spearman_damage": [0.0, 0.1, 0.05, 0.4, 0.45, 0.5],
+    })
+    lines = val.summarise(pd.DataFrame(), em, {"flood": (25, 211)})
+    text = "\n".join(lines)
+    assert "cyclone records (Spearman 0.60 across" in text and "0.10 to 0.20" in text
+    assert "25 of its 211 flood records" in text and "(sections 4 and 5)" in text
+    assert "sections 3 to 5" in "\n".join(val.summarise(pd.DataFrame()))
