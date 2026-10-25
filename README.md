@@ -12,7 +12,7 @@ Status: Phase 0, feasibility.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-make install      # pip install -e ".[geo,api,dev]"
+make install      # pip install -e ".[geo,api,dev,report]"
 make test         # unit tests (Earth Engine and database tests are skipped)
 make lint
 ```

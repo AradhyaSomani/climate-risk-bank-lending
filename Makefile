@@ -5,7 +5,7 @@ DATABASE_URL ?= postgresql://postgres@localhost:5432/cri
 	checksums
 
 install:
-	$(PY) -m pip install -e ".[geo,api,dev]"
+	$(PY) -m pip install -e ".[geo,api,dev,report]"
 
 lint:
 	$(PY) -m ruff check src tests scripts
