@@ -16,6 +16,9 @@ Evaluation is leave-one-event-out: for each event, every quarter of its window i
 from training (all districts, so no contemporaneous leak), the models are fitted on the
 rest, and the error is measured on the event's treated districts in its window. The gate:
 H2 must have lower RMSE than H1 on average over events.
+
+Leakage check (Evaluation B5): the same evaluation on a shuffled target. No model should then
+beat predicting the training mean, which every run also reports as `naive_train_mean`.
 """
 
 from __future__ import annotations
@@ -81,6 +84,7 @@ def design(y: pd.DataFrame, s: pd.DataFrame, w: np.ndarray) -> pd.DataFrame:
     return out
 
 
+MODELS = ["h0_no_graph", "h1_spatial_lag", "h2_graph_conv"]
 OWN = [f"y_lag{k}" for k in range(1, LAGS + 1)] + [f"shock_l{k}" for k in range(WINDOW)] + [
     "q2", "q3", "q4"]
 SPATIAL = ["w_y_lag1"] + [f"w_shock_l{k}" for k in range(WINDOW)]
@@ -162,7 +166,9 @@ def leave_one_event_out(d: pd.DataFrame, events: pd.DataFrame, event_district: p
         if test.sum() == 0 or train.sum() < 50:
             continue
         y_te = d.y.to_numpy()[test]
-        res = {"event_id": ev.event_id, "n_test": int(test.sum())}
+        res = {"event_id": ev.event_id, "n_test": int(test.sum()),
+               "naive_train_mean": float(np.sqrt(np.mean((d.y.to_numpy()[train].mean()
+                                                          - y_te) ** 2)))}
         for name, cols in (("h0_no_graph", OWN), ("h1_spatial_lag", OWN + SPATIAL)):
             beta = fit_ridge(d.loc[train, cols].to_numpy(), d.y.to_numpy()[train])
             pred = predict_ridge(beta, d.loc[test, cols].to_numpy())
@@ -172,8 +178,33 @@ def leave_one_event_out(d: pd.DataFrame, events: pd.DataFrame, event_district: p
         rows.append(res)
     out = pd.DataFrame(rows)
     if len(out):
-        mean = out[["h0_no_graph", "h1_spatial_lag", "h2_graph_conv"]].mean().to_dict()
+        mean = out[MODELS + ["naive_train_mean"]].mean().to_dict()
         out = pd.concat([out, pd.DataFrame([{"event_id": "mean",
                                              "n_test": int(out.n_test.sum()), **mean}])],
                         ignore_index=True)
+    return out
+
+
+def shuffled_target(d: pd.DataFrame, seed: int = 0) -> pd.DataFrame:
+    """The design with `y` permuted across the rows that have one. The inputs, lags included,
+    stay as they were, so nothing in them can predict the new target."""
+    out = d.copy()
+    has = out.y.notna().to_numpy()
+    out.loc[has, "y"] = np.random.default_rng(seed).permutation(out.y.to_numpy()[has])
+    return out
+
+
+def leakage_check(d: pd.DataFrame, events: pd.DataFrame, event_district: pd.DataFrame,
+                  w: np.ndarray, graph_kwargs: dict | None = None, seed: int = 0,
+                  tolerance: float = 0.05) -> pd.DataFrame:
+    """Leave-one-event-out on a shuffled target. One row per model with its mean RMSE over
+    events relative to the training-mean prediction; collapsed when the ratio is at least
+    1 - `tolerance`, i.e. the model has no skill left."""
+    res = leave_one_event_out(shuffled_target(d, seed), events, event_district, w,
+                              graph_kwargs)
+    mean = res[res.event_id == "mean"].iloc[0]
+    out = pd.DataFrame({"model": MODELS, "rmse": [float(mean[m]) for m in MODELS]})
+    out["naive_rmse"] = float(mean.naive_train_mean)
+    out["ratio"] = out.rmse / out.naive_rmse
+    out["collapsed"] = out.ratio >= 1 - tolerance
     return out

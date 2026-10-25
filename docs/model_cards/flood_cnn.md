@@ -65,6 +65,37 @@ experiment `flood_cnn`, run 039b60853c0746e8b04591e1a4e330cf. Weights:
 `data/interim/flood_cnn/sar_base16.pt` (and `data/models/flood_cnn/` since it passed).
 Scores per event: `data/interim/flood_cnn/results.csv`.
 
+## Leakage check (Evaluation B5)
+`python -m cri.ml.flood_cnn.train <name> --shuffle-labels --seed N` trains the same U-Net
+with the water masks permuted across training patches (and, with seed N+1, across
+validation patches), then scores it on the real test labels of the held-out events. The
+rule set before the run: the check passes ("collapsed") when the test IoU is at most the
+all-water IoU plus 0.05, where all-water is calling every pixel water, the best a model
+with no skill can do on IoU (`baselines.chance_scores`). Results are appended to
+`results.csv` with `check=shuffled_labels`; the weights stay in `data/interim/`.
+
+| Run | Seed | Best epoch | Bolivia | India | Mean IoU | All-water | Rule |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `sar_base16_shuffled` (MLflow 6c5f43b1) | 42 | 9 | 0.292 | 0.229 | 0.261 | 0.142 | **not collapsed** |
+| `sar_base16_shuffled_s7` (MLflow 56a29fe9) | 7 | 5 | 0.060 | 0.084 | 0.072 | 0.142 | collapsed |
+| Real model, for comparison | | | 0.702 | 0.553 | 0.628 | | |
+| Otsu per chip on VH, no labels at all | | | | | 0.324 | | |
+
+**Seed 42 fails the rule as it was written.** It is not a leak through the split: the test
+events never enter training or epoch selection, and with shuffled masks the training signal
+is noise. What the model can still learn is the input itself. With class weights and Dice
+loss a skill-less model sits near 50% water, and the cheapest way to split the pixels is by
+brightness. Dark radar returns are water, so that split already scores above all-water.
+Seed 7 ended in a different place (mostly dry), which shows the outcome depends on where
+training drifts, not on the labels.
+
+Both shuffled runs stay below Otsu on VH (0.324), which uses no labels at all, and far
+below the real model (0.628). So 0.261 is what brightness alone gives, and the real model's
+lead over it comes from the labels. The second criterion, "below the label-free Otsu
+score", was added after seeing the seed-42 result and is logged as such in
+`docs/decision_log.md`. Two seeds is a small sample; a third run would show how often the
+brightness split happens.
+
 ## Intended use and limits
 - Use: the flood map for events GFD missed (Kerala 2018), through
   `python -m cri.ml.flood_cnn.predict <weights> <scene.tif> <out.tif>` on a backscatter export

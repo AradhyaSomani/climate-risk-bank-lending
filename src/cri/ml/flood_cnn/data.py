@@ -124,6 +124,13 @@ def build_split(chip_ids: list[str], channels: list[str], patch: int, min_valid:
                  pd.DataFrame(meta, columns=["chip", "event", "row", "col"]))
 
 
+def shuffle_labels(split: Split, seed: int) -> Split:
+    """The same patches with their label masks permuted across patches, for the leakage
+    check: every input keeps its pixels, but the mask it is trained on is another patch's."""
+    order = np.random.default_rng(seed).permutation(len(split.y))
+    return Split(split.x, split.y[order], split.meta)
+
+
 def load_splits(cfg: dict | None = None, root: Path | None = None) -> dict[str, Split]:
     cfg = cfg or config.load("ml/flood_cnn")["data"]
     parts = split_chips(chips(root), cfg["test_events"], cfg["val_events"])

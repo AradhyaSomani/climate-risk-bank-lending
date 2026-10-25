@@ -5,6 +5,7 @@ Needs B's panel (`panel_credit_deposit.parquet`, contract C2) and the event cata
 missing and stops.
 
     python -m cri.ml.graph.run
+    python -m cri.ml.graph.run --shuffle-target     # leakage check (Evaluation B5)
 """
 
 from __future__ import annotations
@@ -29,6 +30,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--measure", default="credit", choices=["credit", "deposits"])
     p.add_argument("--ring", type=int, default=0,
                    help="0: test on treated districts; 1: on their neighbours (Phase 3F)")
+    p.add_argument("--shuffle-target", action="store_true",
+                   help="leakage check: same evaluation on a shuffled target, no gate")
     a = p.parse_args(argv)
     runlog.setup_logging()
     proc = config.path("processed")
@@ -57,11 +60,21 @@ def main(argv: list[str] | None = None) -> None:
         for e, g in ed.groupby("event_id"):
             r = rings(set(g.district_id[g.treated]), adj, depth=a.ring)
             targets[e] = {k for k, v in r.items() if v == a.ring}
+    if a.shuffle_target:
+        with tracking.start_run("graph", {"measure": a.measure, "shuffle_target": True,
+                                          **cfg["graph"]}, run_name=f"leakage_{a.measure}") as run:
+            res = models.leakage_check(d, events, ed, w)
+            run.log_metrics({f"ratio_{r.model}": r.ratio for r in res.itertuples()})
+            run.set_tags({"check": "shuffled_target", "collapsed": bool(res.collapsed.all())})
+        res.to_csv(config.path("interim") / f"graph_leakage_{a.measure}.csv", index=False)
+        print(res.round(4).to_string(index=False))
+        print("leakage check:", "collapsed to chance" if res.collapsed.all() else "LEAK")
+        return
     with tracking.start_run("graph", {"measure": a.measure, "ring": a.ring, **cfg["graph"]},
                             run_name=f"loeo_{a.measure}_ring{a.ring}") as run:
         res = models.leave_one_event_out(d, events, ed, w, targets=targets)
         mean = res[res.event_id == "mean"].iloc[0]
-        run.log_metrics({k: mean[k] for k in ("h0_no_graph", "h1_spatial_lag", "h2_graph_conv")})
+        run.log_metrics({k: mean[k] for k in models.MODELS + ["naive_train_mean"]})
         passed = tracking.record_gate(run, "h1_spatial_lag", mean.h1_spatial_lag,
                                       mean.h2_graph_conv, metric=cfg["gate"]["metric"],
                                       higher_is_better=False)

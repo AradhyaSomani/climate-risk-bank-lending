@@ -23,6 +23,28 @@ disaster beyond a simple spatial lag. Feeds the spillover check in Phase 3F.
   with every quarter of the held-out window removed from training. Gate: H2 below H1.
 - Result: **not run**. Needs `panel_credit_deposit.parquet` from B. The code is tested on a
   simulated grid where shocks spill over (H1 beats H0 there, as it should).
+- Every run also reports `naive_train_mean`, the RMSE of predicting the training mean, as
+  the no-skill reference.
+
+## Leakage check (Evaluation B5)
+`python -m cri.ml.graph.run --shuffle-target` repeats the leave-one-event-out evaluation with
+the target permuted across district-quarters; the inputs, lags included, are unchanged, so
+nothing in them can predict the new target. The check passes ("collapsed") when every model's
+mean RMSE is at least 0.95 times the training-mean RMSE. Results go to
+`data/interim/graph_leakage_<measure>.csv` and MLflow (`leakage_<measure>`).
+
+On the simulated grid of tests/ml/test_graph.py (real target on three grids, shuffled target
+three times on two of them), RMSE as a share of the training-mean RMSE:
+
+| Target | H0 no graph | H1 spatial lag | H2 graph |
+| --- | --- | --- | --- |
+| Real | 0.18 to 0.21 | 0.18 to 0.20 | 1.05 to 1.18 |
+| Shuffled | 0.97 to 1.05 | 0.96 to 1.05 | 3.7 to 6.7 |
+
+The ridge models lose all their skill on the shuffled target, as they should. H2 does worse
+than the mean on both, because 300 epochs on a few hundred rows overfit; on the real panel
+that is something to watch, not a leak. The real-panel check runs with the gate once B's
+panel exists.
 
 ## Spillover use (Phase 3F)
 `python -m cri.ml.graph.run --ring 1` scores the three models on the neighbours of treated

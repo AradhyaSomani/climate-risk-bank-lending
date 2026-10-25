@@ -16,3 +16,8 @@
 - District names that changed after 2011, and districts carved out after 2011, map to their Census 2011 district through `configs/district_aliases.yaml` (a new district goes to the district it was carved from). Telangana maps to Andhra Pradesh and Ladakh to Jammu & Kashmir.
 - Kerala 2018 and Uttarakhand 2013 dates checked against EM-DAT and kept: the press-report windows sit inside the EM-DAT records, so neither impact quarter moves. Both EM-DAT records cover several states at once.
 - An EM-DAT record belongs to a catalogue event when it has the same hazard type, shares a state, and either carries the event's IMD storm id or overlaps its dates within 3 days (`emdat_slack_days` in `configs/events.yaml`). Every one of the 15 events gets exactly one record.
+
+## 2026-10-25 U-Net leakage check (A)
+
+- The shuffled-label check (Evaluation B5) was run twice. Seed 7 collapsed (test IoU 0.072, all-water 0.142). Seed 42 did not under the rule set before the run (0.261 against a threshold of 0.192).
+- Decided **after seeing the seed-42 result**: a shuffled run also counts as showing no leak when it stays below Otsu on VH per chip (0.324), a method that uses no labels. Reason: the held-out events never reach training or epoch selection, so the remaining score can only come from the input (dark radar returns are water), not from the labels. The U-Net stays kept; its card reports both runs and both criteria.

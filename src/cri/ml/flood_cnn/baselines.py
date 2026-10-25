@@ -122,6 +122,21 @@ def baseline_scores(chip_ids: list[str], fixed: dict[str, float] | None = None,
                      ignore_index=True)
 
 
+def chance_scores(chip_ids: list[str], root=None) -> pd.DataFrame:
+    """Per-event scores of calling every valid pixel water. A model with no skill scores at
+    most this water IoU (it equals the event's water share), so it is the chance level for
+    the shuffled-label check."""
+    from cri.ingest.sen1floods11 import chip_event
+    from cri.ml.flood_cnn.data import load_chip
+
+    rows = []
+    for chip in chip_ids:
+        _, y, _ = load_chip(chip, ["vv"], root)
+        rows.append({"chip": chip, "event": chip_event(chip),
+                     **confusion(np.ones(y.shape, dtype=bool), y)})
+    return by_event(pd.DataFrame(rows)).assign(method="all_water")
+
+
 def main(argv: list[str] | None = None) -> None:
     from cri import runlog
     from cri.ml.flood_cnn.data import chips, split_chips
