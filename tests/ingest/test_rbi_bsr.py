@@ -91,13 +91,15 @@ def test_period_column_and_explicit_unit(tmp_path):
         ["Sep-2018", "Odisha", "Puri", 101.0, "-"],
     ]).to_csv(f, header=False, index=False)
     out = read_district_table(f, unit="crore")
-    assert sorted(out["quarter_end"].unique()) == [pd.Timestamp("2018-06-30"), pd.Timestamp("2018-09-30")]
+    assert sorted(out["quarter_end"].unique()) == [pd.Timestamp("2018-06-30"),
+                                                   pd.Timestamp("2018-09-30")]
     missing = out[(out.measure == "credit") & (out.quarter_end == "2018-09-30")]
     assert missing["amount_cr"].isna().all()  # "-" means not reported, not zero
 
 
 def test_missing_unit_is_an_error(tmp_path):
     f = tmp_path / "x_Mar-2019.csv"
-    pd.DataFrame([["State", "District", "Deposits"], ["Kerala", "Idukki", 5]]).to_csv(f, header=False, index=False)
+    rows = [["State", "District", "Deposits"], ["Kerala", "Idukki", 5]]
+    pd.DataFrame(rows).to_csv(f, header=False, index=False)
     with pytest.raises(ValueError, match="unit"):
         read_district_table(f)

@@ -72,7 +72,8 @@ def parse_quarter_end(text) -> pd.Timestamp | None:
         return quarter_end_from_month(ts.year, ts.month)
     s = str(text).strip()
 
-    m = re.search(r"(\d{4})\s*-\s*(\d{2,4})\s*[:\s]*q\s*([1-4])|q\s*([1-4])\s*[:,\s]*(\d{4})\s*-\s*(\d{2,4})", s, re.I)
+    m = re.search(r"(\d{4})\s*-\s*(\d{2,4})\s*[:\s]*q\s*([1-4])"
+                  r"|q\s*([1-4])\s*[:,\s]*(\d{4})\s*-\s*(\d{2,4})", s, re.I)
     if m:
         start_year = int(m.group(1) or m.group(5))
         fq = int(m.group(3) or m.group(4))
@@ -80,7 +81,8 @@ def parse_quarter_end(text) -> pd.Timestamp | None:
         year = start_year if month <= 12 else start_year + 1
         return quarter_end_from_month(year, (month - 1) % 12 + 1)
 
-    if not re.search(r"\d{1,2}[\-/\s][a-z]{3}", s, re.I):  # "28-Sep-2018" is a full date, handled below
+    # "28-Sep-2018" is a full date, handled below
+    if not re.search(r"\d{1,2}[\-/\s][a-z]{3}", s, re.I):
         for m in re.finditer(r"\b([a-z]{3})[a-z]*[\s\-.,']*(\d{4}|\d{2})\b", s, re.I):
             if m.group(1).lower() in MONTHS:
                 year = int(m.group(2))
@@ -128,7 +130,8 @@ def map_columns(headers: list[str]) -> dict[str, str]:
                 continue
             if any(w in hl for w in words):
                 # "credit-deposit ratio" and "per office" columns are derived, not amounts
-                if ours in {"deposits", "credit"} and re.search(r"ratio|per\s|share|%|percent|growth", hl):
+                derived = re.search(r"ratio|per\s|share|%|percent|growth", hl)
+                if ours in {"deposits", "credit"} and derived:
                     continue
                 if ours == "rbi_state" and "district" in hl:
                     continue
@@ -161,7 +164,8 @@ def read_district_table(
     mapping = map_columns(headers)
     missing = {"rbi_state", "rbi_district"} - mapping.keys()
     if missing or not ({"deposits", "credit"} & mapping.keys()):
-        raise ValueError(f"{path.name}: could not find columns {missing or 'deposits/credit'} in {headers}")
+        raise ValueError(f"{path.name}: could not find columns "
+                         f"{missing or 'deposits/credit'} in {headers}")
 
     unit = unit or detect_unit(title_rows + headers)
     if unit is None:
@@ -182,9 +186,11 @@ def read_district_table(
     else:
         q = parse_quarter_end(path.stem.replace("_", " "))
         if q is None:
-            q = next((parse_quarter_end(t) for t in title_rows if parse_quarter_end(t) is not None), None)
+            q = next((parse_quarter_end(t) for t in title_rows
+                      if parse_quarter_end(t) is not None), None)
         if q is None:
-            raise ValueError(f"{path.name}: no quarter found in a column, the file name or title; pass quarter_end=")
+            raise ValueError(f"{path.name}: no quarter found in a column, the file name or "
+                             "title; pass quarter_end=")
         df["quarter_end"] = q
     if df["quarter_end"].isna().any():
         bad = df.loc[df["quarter_end"].isna(), "period"].iloc[0]
@@ -193,7 +199,8 @@ def read_district_table(
     if "bank_group" not in df.columns:
         df["bank_group"] = bank_group
     df["sector"] = sector
-    df["n_offices"] = pd.to_numeric(df.get("n_offices"), errors="coerce") if "n_offices" in df else pd.NA
+    df["n_offices"] = (pd.to_numeric(df.get("n_offices"), errors="coerce")
+                       if "n_offices" in df else pd.NA)
 
     measures = [m for m in ("deposits", "credit") if m in df.columns]
     long = df.melt(
@@ -201,7 +208,8 @@ def read_district_table(
         value_vars=measures, var_name="measure", value_name="amount",
     )
     long["amount"] = pd.to_numeric(
-        long["amount"].astype(str).str.replace(",", "").str.strip().replace({"-": None, "": None, "nan": None}),
+        long["amount"].astype(str).str.replace(",", "").str.strip()
+        .replace({"-": None, "": None, "nan": None}),
         errors="coerce",
     )
     long["unit"] = unit
@@ -214,7 +222,8 @@ def read_district_table(
 
 def read_folder(folder: str | Path, **kwargs) -> pd.DataFrame:
     """Read every .xlsx/.xls/.csv file in a folder and stack them."""
-    files = sorted(p for p in Path(folder).iterdir() if p.suffix.lower() in {".xlsx", ".xls", ".csv"})
+    files = sorted(p for p in Path(folder).iterdir()
+                   if p.suffix.lower() in {".xlsx", ".xls", ".csv"})
     if not files:
         raise FileNotFoundError(f"No .xlsx/.xls/.csv files in {folder}")
     return pd.concat([read_district_table(f, **kwargs) for f in files], ignore_index=True)
