@@ -1,4 +1,0 @@
-event_id,estimator,outcome,bank_group,sector,window_start,window_end,estimate,ci_low,ci_high,ci_level,n_treated,n_control,pre_trend_p,primary,code_version,data_version
-kerala_2018,callaway_santanna,log_credit,all,all,0,3,0.021,-0.004,0.046,0.95,7,22,0.41,True,toy,data-v0-toy
-kerala_2018,callaway_santanna,log_deposits,all,all,0,3,0.012,-0.01,0.034,0.95,7,22,0.63,False,toy,data-v0-toy
-pooled,did_imputation,log_credit,public,all,0,7,-0.008,-0.031,0.015,0.95,64,210,,False,toy,data-v0-toy

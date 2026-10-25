@@ -13,7 +13,7 @@ notes:
 tables:
   panel_credit_deposit:
     file: data/processed/panel_credit_deposit.parquet
-    sample: docs/contracts/samples/panel_credit_deposit.csv
+    sample: tests/fixtures/contracts/panel_credit_deposit.csv
     primary_key: [district_id, quarter_end, bank_group, measure, sector]
     columns:
       district_id: {dtype: int, nullable: false, min: 1, max: 999}

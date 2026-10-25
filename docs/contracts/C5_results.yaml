@@ -10,7 +10,7 @@ description: >
 tables:
   effects:
     file: data/processed/effects.parquet
-    sample: docs/contracts/samples/effects.csv
+    sample: tests/fixtures/contracts/effects.csv
     primary_key: [event_id, estimator, outcome, bank_group, sector, window_start, window_end]
     columns:
       event_id: {dtype: str, nullable: false, description: C4 event id, or "pooled" for estimates across events}
@@ -33,7 +33,7 @@ tables:
     checks: [interval_contains_estimate, window_ordered]
   stress_results:
     file: data/processed/stress_results.parquet
-    sample: docs/contracts/samples/stress_results.csv
+    sample: tests/fixtures/contracts/stress_results.csv
     primary_key: [scenario_id, bank_group, metric, horizon]
     columns:
       scenario_id: {dtype: str, nullable: false}

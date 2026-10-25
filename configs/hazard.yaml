@@ -1,0 +1,55 @@
+# Hazard parameters. Every number here is a placeholder until the Phase 0 pre-registration
+# fixes it; after that, changes go in docs/decision_log.md with a reason and a date.
+flood:
+  source_pre2019: gfd
+  source_post2018: s1_unet   # only after the U-Net passes its Phase 2B gate; else s1_otsu
+  min_clear_perc: 0          # minimum GFD clear-view fraction (0-1) for a pixel to count
+  mask_permanent_water: true # drop jrc_perm_water pixels from flooded area
+  event_hit_share: 0.01      # a district is "flooded in an event" above this flooded share
+  landcover: true            # add flooded built-up and cropland shares (ESA WorldCover 2021)
+  keep_rasters: true         # keep downloaded GFD rasters in data/raw/gfd (DVC-tracked)
+cyclone:
+  radius_km: 100             # district counted as exposed within this distance of the track
+  min_grade: CS              # and at or above this IMD grade at closest approach
+  densify_minutes: 30        # interpolate fixes to this step before measuring distance
+  max_report_km: 500         # keep district rows up to this distance from the track
+  landfall_exclude_states: [Andaman & Nicobar Island, Lakshadweep]
+  coastal_within_km: 5       # a landfall district must lie within this distance of the sea
+baseline:
+  grid_deg: 0.005            # India grid for JRC and DEM sampling (about 500 m)
+  perm_water_occurrence: 90  # JRC occurrence (% of observations wet) counted as permanent
+  lowlying_m: 10             # elevation below this counts as low-lying land
+score:
+  # Phase 2B composite. Weights are fixed here before any outcome is looked at; change them
+  # only through docs/decision_log.md. Indicators are oriented so that higher = more hazard;
+  # `direction: -1` flips those where a lower value means more hazard.
+  direction: {rel_elev_median_m: -1}
+  weights:
+    flood:
+      flood_events_per_decade: 0.30
+      flood_mean_share: 0.15
+      flood_max_share: 0.10
+      flood_crop_share: 0.10
+      flood_built_share: 0.05
+      flood_duration_days: 0.05
+      lowlying_share: 0.10
+      rel_elev_median_m: 0.10
+      perm_water_share: 0.05
+    cyclone:
+      cyclone_storms_per_decade: 0.40
+      cyclone_max_wind_kt: 0.25
+      cyclone_landfalls_per_decade: 0.25
+      cyclone_max_grade_rank: 0.10
+  # tier cut-offs on the within-India percentile of the score: below 0.50 = 1 (low),
+  # 0.50-0.75 = 2 (medium), 0.75-0.90 = 3 (high), 0.90 and above = 4 (very high)
+  tier_cutoffs: [0.50, 0.75, 0.90]
+validation:
+  # Phase 2C. Out-of-sample: build the score from events before the cut-off year, test it
+  # on districts hit from that year on.
+  flood_cutoff_year: 2012     # GFD 2000-2011 to build, 2012-2018 to test
+  cyclone_cutoff_year: 2005   # IMD 1982-2004 to build, 2005 onwards to test
+  top_tier: 3                 # "high" and above, for precision and recall
+  # Kerala August 2018: the seven worst-hit districts named in the Government of Kerala
+  # Post Disaster Needs Assessment (Oct 2018, p. 13). Census 2011 codes.
+  kerala_2018_worst: [594, 595, 596, 597, 598, 599, 590]  # Thrissur Ernakulam Idukki Kottayam Alappuzha Pathanamthitta Wayanad
+  kerala_state: Kerala

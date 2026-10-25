@@ -9,7 +9,7 @@ description: >
 tables:
   district_master:
     file: data/processed/district_master.parquet
-    sample: docs/contracts/samples/district_master.csv
+    sample: tests/fixtures/contracts/district_master.csv
     primary_key: [district_id]
     columns:
       district_id: {dtype: int, nullable: false, min: 1, max: 999, description: Census 2011 district code}
@@ -24,7 +24,7 @@ tables:
     checks: [row_count_640_if_full]
   crosswalk_rbi_to_c2011:
     file: data/processed/crosswalk_rbi_to_c2011.parquet
-    sample: docs/contracts/samples/crosswalk_rbi_to_c2011.csv
+    sample: tests/fixtures/contracts/crosswalk_rbi_to_c2011.csv
     primary_key: [rbi_name, rbi_state, valid_from, district_id]
     columns:
       rbi_name: {dtype: str, nullable: false, description: District name exactly as written in the RBI table}

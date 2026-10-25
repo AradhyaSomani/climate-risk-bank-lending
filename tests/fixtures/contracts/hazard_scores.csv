@@ -1,0 +1,5 @@
+district_id,score_version,hazard_type,score,tier,data_version
+595,rank_avg,flood,0.71,3,toy
+598,rank_avg,flood,0.93,4,toy
+599,rank_avg,flood,0.55,2,toy
+598,rank_avg,combined,0.93,4,toy

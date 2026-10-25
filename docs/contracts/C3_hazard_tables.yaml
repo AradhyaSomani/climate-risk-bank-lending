@@ -1,0 +1,75 @@
+contract: C3
+producer: A
+consumer: B
+description: >
+  Per-event hazard footprints by 2011 district (flood extent, cyclone exposure) and the
+  district hazard scores with tiers. Tier 1 = low, 4 = very high.
+tables:
+  flood_extent_district_event:
+    file: data/processed/flood_extent_district_event.parquet
+    sample: tests/fixtures/contracts/flood_extent_district_event.csv
+    primary_key: [event_id, district_id, source]
+    columns:
+      event_id: {dtype: str}
+      district_id: {dtype: int}
+      source: {dtype: str, allowed: [gfd, s1_unet, s1_otsu]}
+      flooded_km2: {dtype: float, min: 0}
+      flooded_share: {dtype: float, min: 0, max: 1, description: flooded area / district land area}
+      mapped_share: {dtype: float, min: 0, max: 1, description: share of the district inside the event raster's valid area}
+      flooded_built_share: {dtype: float, min: 0, max: 1, nullable: true}
+      flooded_crop_share: {dtype: float, min: 0, max: 1, nullable: true}
+      duration_days: {dtype: float, min: 0, nullable: true, description: mean over flooded pixels}
+      clear_view_share: {dtype: float, min: 0, max: 1, nullable: true, description: share of district with cloud-free observations}
+      data_version: {dtype: str}
+  cyclone_exposure_district_event:
+    file: data/processed/cyclone_exposure_district_event.parquet
+    sample: tests/fixtures/contracts/cyclone_exposure_district_event.csv
+    primary_key: [event_id, district_id]
+    columns:
+      event_id: {dtype: str}
+      district_id: {dtype: int}
+      track_dist_km: {dtype: float, min: 0, description: distance from district polygon to track}
+      closest_time: {dtype: datetime, description: UTC time of closest approach}
+      wind_kt_closest: {dtype: float, min: 0, description: track max sustained wind at closest approach}
+      grade_closest: {dtype: str, allowed: [L, D, DD, CS, SCS, VSCS, ESCS, SuCS], description: IMD grade from the interpolated wind; L is below depression}
+      landfall_time: {dtype: datetime, nullable: true}
+      within_radius: {dtype: bool, description: track_dist_km <= configured radius and grade >= configured minimum}
+      data_version: {dtype: str}
+  hazard_indicators:
+    file: data/processed/hazard_indicators.parquet
+    sample: tests/fixtures/contracts/hazard_indicators.csv
+    primary_key: [district_id]
+    columns:
+      district_id: {dtype: int}
+      flood_events_hit: {dtype: int, min: 0, description: GFD events with flooded_share above the hit share}
+      flood_events_per_decade: {dtype: float, min: 0}
+      flood_mean_share: {dtype: float, min: 0, max: 1, description: mean flooded share over the events that hit the district}
+      flood_max_share: {dtype: float, min: 0, max: 1, description: worst event}
+      flood_built_share: {dtype: float, min: 0, max: 1, description: mean share of built-up area flooded, over hit events}
+      flood_crop_share: {dtype: float, min: 0, max: 1, description: mean share of cropland flooded, over hit events}
+      flood_duration_days: {dtype: float, min: 0, description: mean over hit events}
+      flood_events_mapped: {dtype: int, min: 0}
+      gfd_record_years: {dtype: float, min: 0}
+      cyclone_storms_within: {dtype: int, min: 0, description: storms meeting the within_radius rule}
+      cyclone_storms_per_decade: {dtype: float, min: 0}
+      cyclone_max_wind_kt: {dtype: float, min: 0, description: strongest wind at closest approach among storms within radius_km; 0 if none}
+      cyclone_max_grade: {dtype: str, nullable: true, allowed: [L, D, DD, CS, SCS, VSCS, ESCS, SuCS]}
+      cyclone_max_grade_rank: {dtype: int, min: 0, max: 8, description: 0 = no storm within radius_km, 1 = L ... 8 = SuCS}
+      cyclone_landfalls_per_decade: {dtype: float, min: 0, description: landfalls at or above the minimum grade}
+      imd_record_years: {dtype: float, min: 0}
+      perm_water_share: {dtype: float, min: 0, max: 1, nullable: true}
+      lowlying_share: {dtype: float, min: 0, max: 1, nullable: true}
+      rel_elev_median_m: {dtype: float, nullable: true, description: median height above the district's 5th percentile elevation (proxy for height above drainage)}
+      slope_mean_deg: {dtype: float, min: 0, nullable: true}
+      data_version: {dtype: str}
+  hazard_scores:
+    file: data/processed/hazard_scores.parquet
+    sample: tests/fixtures/contracts/hazard_scores.csv
+    primary_key: [district_id, score_version, hazard_type]
+    columns:
+      district_id: {dtype: int}
+      score_version: {dtype: str, allowed: [rank_avg, weighted, pca, susceptibility]}
+      hazard_type: {dtype: str, allowed: [flood, cyclone, combined]}
+      score: {dtype: float}
+      tier: {dtype: int, min: 1, max: 4}
+      data_version: {dtype: str}
