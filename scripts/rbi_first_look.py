@@ -1,16 +1,22 @@
 """Phase 0 A first look at the RBI district deposit and credit downloads.
 
-Reads every file in data/raw/rbi/ with cri.ingest.rbi_bsr, then prints the
-numbers docs/00_rbi_audit.md asks for and saves one plot per test state.
+Reads every district-wise statement in data/raw/rbi/quarterly/ with
+cri.ingest.rbi_bsr, then prints the numbers docs/00_rbi_audit.md asks for:
+coverage, units and the all-India break check. Nothing here looks at a
+district's outcomes around an event.
 
     python scripts/rbi_first_look.py
     python scripts/rbi_first_look.py --out docs/00_rbi_first_look.md
-    python scripts/rbi_first_look.py --raw data/raw/rbi --unit lakh \
+    python scripts/rbi_first_look.py --raw data/raw/rbi/quarterly --unit lakh \
         --states Kerala Odisha "Tamil Nadu"
+
+--plots also draws credit and deposits per district for each test state. Those
+lines run through the main events, so leave it off until docs/00_hypotheses.md
+is signed.
 
 Outputs:
     data/interim/rbi_first_look.parquet     the parsed long table (not committed)
-    docs/figures/00_rbi_<state>.png         credit and deposits per district
+    docs/figures/00_rbi_<state>.png         with --plots: credit and deposits per district
     printed markdown                        paste into docs/00_rbi_audit.md (--out also
                                             writes it to a file)
 """
@@ -33,8 +39,8 @@ BREAK_QUARTERS = [pd.Timestamp("2022-12-31"), pd.Timestamp("2023-03-31")]
 
 
 def coverage_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Districts reporting per quarter, overall and per state."""
-    d = df.drop_duplicates(["quarter_end", "rbi_state", "rbi_district"])
+    """Districts reporting per quarter (with an amount, not blank), overall and per state."""
+    d = df[df.amount_cr.notna()].drop_duplicates(["quarter_end", "rbi_state", "rbi_district"])
     total = d.groupby("quarter_end").size().rename("all_states")
     by_state = d.groupby(["quarter_end", "rbi_state"]).size().unstack(fill_value=0)
     return pd.concat([total, by_state], axis=1)
@@ -101,7 +107,7 @@ class Tee:
             s.flush()
 
 
-def report(df: pd.DataFrame, test_states: list[str]) -> None:
+def report(df: pd.DataFrame, test_states: list[str], plots: bool = False) -> None:
     q = df["quarter_end"]
     print("## Numbers for docs/00_rbi_audit.md\n")
     print(f"- Files read: {df.source_file.nunique()}; rows: {len(df):,}")
@@ -129,6 +135,8 @@ def report(df: pd.DataFrame, test_states: list[str]) -> None:
     print(g[g.is_break_window | g.index.isin(after)].round(4)
           .rename(index=lambda d: f"{d:%Y-%m-%d}").to_markdown())
 
+    if not plots:
+        return
     print("\n### Plots\n")
     for s in test_states:
         plot_state(df, s, ROOT / "docs" / "figures" / f"00_rbi_{s.lower().replace(' ', '_')}.png")
@@ -137,11 +145,14 @@ def report(df: pd.DataFrame, test_states: list[str]) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--raw", default=str(ROOT / "data" / "raw" / "rbi"))
+    ap.add_argument("--raw", default=str(ROOT / "data" / "raw" / "rbi" / "quarterly"))
     ap.add_argument("--unit", default=None,
                     help="Force the unit if files do not state it (lakh or crore)")
     ap.add_argument("--states", nargs="+", default=["Kerala", "Odisha", "Tamil Nadu"])
     ap.add_argument("--out", help="also write the printed markdown to this file")
+    ap.add_argument("--plots", action="store_true",
+                    help="plot each test state's districts (only after the pre-registration "
+                         "is signed)")
     args = ap.parse_args()
 
     df = read_folder(args.raw, unit=args.unit)
@@ -150,10 +161,10 @@ def main() -> None:
     df.to_parquet(out, index=False)
 
     if not args.out:
-        report(df, args.states)
+        report(df, args.states, args.plots)
         return
     with open(args.out, "w") as f, contextlib.redirect_stdout(Tee(sys.stdout, f)):
-        report(df, args.states)
+        report(df, args.states, args.plots)
     print(f"wrote {args.out}")
 
 

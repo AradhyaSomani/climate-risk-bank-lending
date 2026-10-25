@@ -158,5 +158,6 @@ uvicorn==0.54.0           # via -c requirements/lock-ml.txt, cri (pyproject.toml
 vine==5.1.0               # via amqp, celery, kombu, -c requirements/lock-ml.txt
 voluptuous==0.16.0        # via dvc, dvc-studio-client, -c requirements/lock-ml.txt
 wcwidth==0.9.4            # via prompt-toolkit, -c requirements/lock-ml.txt
+xlrd==2.0.2               # via -c requirements/lock-ml.txt, cri (pyproject.toml)
 yarl==1.25.1              # via aiohttp, -c requirements/lock-ml.txt
 zc-lockfile==4.0          # via dvc, -c requirements/lock-ml.txt

@@ -21,3 +21,8 @@
 
 - The shuffled-label check (Evaluation B5) was run twice. Seed 7 collapsed (test IoU 0.072, all-water 0.142). Seed 42 did not under the rule set before the run (0.261 against a threshold of 0.192).
 - Decided **after seeing the seed-42 result**: a shuffled run also counts as showing no leak when it stays below Otsu on VH per chip (0.324), a method that uses no labels. Reason: the held-out events never reach training or epoch selection, so the remaining score can only come from the input (dark radar returns are water), not from the labels. The U-Net stays kept; its card reports both runs and both criteria.
+
+## 2026-10-25 RBI quarters that are not available (A)
+
+- September 2016, December 2016 and March 2017 (the first BSR-7 entry's district statement stops at June 2016) and the June, September and December quarters from 2023 need a DBIE login to download, and DBIE has no sign-up. Decision (Aradhya): exclude them; the panel has a gap from June 2016 to June 2017 and only March figures from 2023. March 2017 from the annual volume is not spliced in, because it is on another basis.
+- Consequence: Chennai 2015 lacks quarters +3 to +5. Whether it is dropped or the completeness rule is relaxed is open in `docs/00_hypotheses.md` until Devna and Aradhya sign. Amphan's last quarter (June 2023) is missing too, after quarter +3.
