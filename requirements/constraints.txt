@@ -1,0 +1,3 @@
+# Extra limits applied when the locks are regenerated (make lock).
+# rasterio 1.5 ships macOS wheels for macOS 15 only; 1.4.4 has them for macOS 14 (arm64).
+rasterio<1.5

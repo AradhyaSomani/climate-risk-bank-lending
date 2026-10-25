@@ -12,12 +12,16 @@ Status: Phase 0, feasibility.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-make install      # pip install -e ".[geo,api,dev,report]"
-make test         # unit tests (Earth Engine and database tests are skipped)
+make install-pinned   # the pinned versions in requirements/lock.txt, then the package itself
+make test             # unit tests (Earth Engine and database tests are skipped)
 make lint
 ```
 
-Optional extras: `.[gee]` for Earth Engine pulls, `.[ml]` for the models in `src/cri/ml`, `.[db]` for the PostGIS loader.
+`make install-pinned-ml` adds the ML packages (`requirements/lock-ml.txt`). `make install`
+installs the latest versions instead (`pip install -e ".[geo,api,dev,report]"`); optional
+extras are `.[gee]` for Earth Engine pulls, `.[ml]` for the models in `src/cri/ml` and `.[db]`
+for the PostGIS loader. After changing dependencies in `pyproject.toml`, run `make lock`
+(needs [uv](https://docs.astral.sh/uv/)) and commit both lock files.
 
 ## Pipeline
 
@@ -26,13 +30,15 @@ make data      # B: district master, crosswalk, RBI panel, controls
 make hazard    # A: flood extent, cyclone footprints, hazard baseline, scores
 make events    # event catalogue and treatment flags, then the event study
 make stress    # scenarios and the stress test
+make all       # all four in order
+make rebuild   # pinned environment, dvc pull if a remote is set, then make all
 ```
 
 Settings live in `configs/*.yaml` (`paths`, `project`, `hazard`, ...). Every step appends a row
 to `data/processed/run_log.csv` with the git commit, data version and a hash of the configs,
 so any table can be traced to the code that made it. `python -m cri.pipeline <stage> --list`
-shows the steps registered so far. Data is versioned with DVC; set the shared remote once
-with `make dvc-remote URL=...`.
+shows the steps registered so far. Data is versioned with DVC in a shared Google Drive
+folder; `data/README.md` has the one-time setup (`make dvc-remote`) and the daily commands.
 
 ## Layout
 
