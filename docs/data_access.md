@@ -37,6 +37,13 @@ local file to check; their version is pinned in the config named below.
 | Sentinel-1 GRD scenes (Kerala 2018 and other events) | Earth Engine account | `pip install -e ".[gee]"`, `earthengine authenticate`, then `python -m cri.ingest.sentinel1 --kind backscatter ...` (see the Sentinel-1 data card). |
 | RBI district credit and deposits (DBIE) | browser download (DBIE may ask for a captcha; RBI terms grant no reuse licence) | Follow the steps in `docs/data_cards/rbi.md` into `data/raw/rbi/`, then `python scripts/rbi_first_look.py`. |
 
+## Sharing data inside the team (DVC)
+
+`data/raw`, `data/processed` and `data/models` are tracked with DVC (`data/*.dvc` in Git) and
+stored in a Google Drive folder shared between the two of us, never in a public place. EM-DAT
+and Sen1Floods11 are left out of it by `.dvcignore`, so each person downloads those
+themselves. Setup and daily use are in `data/README.md`.
+
 ## What is not redistributed in a release
 
 GFD-derived tables carry the CC BY-NC 4.0 condition, so any release that includes the

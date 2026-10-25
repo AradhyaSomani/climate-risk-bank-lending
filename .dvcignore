@@ -1,3 +1,9 @@
 # Add patterns of files dvc should ignore, which could improve
 # the performance. Learn more at
 # https://dvc.org/doc/user-guide/dvcignore
+
+# Never in the DVC remote. EM-DAT: its terms forbid passing the export on, so each person
+# downloads their own (docs/data_access.md). Sen1Floods11: the pipeline downloads it, and it
+# has no licence that allows sharing.
+data/raw/emdat/
+data/raw/s1_labels/

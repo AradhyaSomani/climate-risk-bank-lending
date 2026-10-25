@@ -1,0 +1,162 @@
+affine==3.0.1             # via rasterio, -c requirements/lock-ml.txt
+aiohappyeyeballs==2.7.1   # via aiohttp, -c requirements/lock-ml.txt
+aiohttp==3.14.5           # via aiohttp-retry, fsspec, -c requirements/lock-ml.txt
+aiohttp-retry==2.9.1      # via dvc-http, scmrepo, -c requirements/lock-ml.txt
+aiosignal==1.4.0          # via aiohttp, -c requirements/lock-ml.txt
+amqp==5.4.1               # via kombu, -c requirements/lock-ml.txt
+annotated-doc==0.0.5      # via fastapi, -c requirements/lock-ml.txt
+annotated-types==0.8.0    # via pydantic, -c requirements/lock-ml.txt
+antlr4-python3-runtime==4.9.3  # via hydra-core, omegaconf, -c requirements/lock-ml.txt
+anyio==4.15.1             # via httpx, starlette, -c requirements/lock-ml.txt
+appdirs==1.4.4            # via iterative-telemetry, -c requirements/lock-ml.txt
+async-timeout==5.0.1 ; python_full_version < '3.11'  # via aiohttp, -c requirements/lock-ml.txt
+asyncssh==2.24.1          # via scmrepo, -c requirements/lock-ml.txt
+atpublic==8.0.1 ; python_full_version < '3.11'  # via flufl-lock, -c requirements/lock-ml.txt
+atpublic==9.0.0 ; python_full_version >= '3.11'  # via flufl-lock, -c requirements/lock-ml.txt
+attrs==26.1.0             # via affine, aiohttp, dvc, dvc-data, rasterio, sqltrie, -c requirements/lock-ml.txt
+billiard==4.3.1           # via celery, -c requirements/lock-ml.txt
+celery==5.6.3             # via dvc, dvc-task, -c requirements/lock-ml.txt
+certifi==2026.10.23       # via httpcore, httpx, pyogrio, pyproj, rasterio, requests, -c requirements/lock-ml.txt
+cffi==2.1.1               # via cryptography, pygit2, -c requirements/lock-ml.txt
+charset-normalizer==3.5.2  # via requests, -c requirements/lock-ml.txt
+click==8.5.0              # via celery, click-didyoumean, click-plugins, click-repl, cligj, gto, rasterio, uvicorn, -c requirements/lock-ml.txt
+click-didyoumean==0.3.1   # via celery, -c requirements/lock-ml.txt
+click-plugins==1.1.1.2    # via celery, rasterio, -c requirements/lock-ml.txt
+click-repl==0.4.1         # via celery, -c requirements/lock-ml.txt
+cligj==0.7.2              # via rasterio, -c requirements/lock-ml.txt
+colorama==0.4.6           # via dvc, pytest, tqdm, -c requirements/lock-ml.txt
+configobj==5.0.9          # via dvc, -c requirements/lock-ml.txt
+contourpy==1.3.2 ; python_full_version < '3.11'  # via matplotlib, -c requirements/lock-ml.txt
+contourpy==1.3.3 ; python_full_version == '3.11.*'  # via matplotlib, -c requirements/lock-ml.txt
+contourpy==1.4.0 ; python_full_version >= '3.12'  # via matplotlib, -c requirements/lock-ml.txt
+cryptography==50.0.2      # via asyncssh, -c requirements/lock-ml.txt
+cycler==0.12.1            # via matplotlib, -c requirements/lock-ml.txt
+dictdiffer==0.10.0        # via dvc-data, -c requirements/lock-ml.txt
+diskcache==5.6.3          # via dvc-data, -c requirements/lock-ml.txt
+distro==1.9.0             # via dvc, iterative-telemetry, -c requirements/lock-ml.txt
+dpath==2.2.0              # via dvc, -c requirements/lock-ml.txt
+dulwich==1.2.19           # via dvc, dvc-studio-client, scmrepo, -c requirements/lock-ml.txt
+dvc==3.67.1               # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+dvc-data==3.18.3          # via dvc, -c requirements/lock-ml.txt
+dvc-http==2.32.0          # via dvc, -c requirements/lock-ml.txt
+dvc-objects==5.2.0        # via dvc, dvc-data, -c requirements/lock-ml.txt
+dvc-render==1.0.2         # via dvc, -c requirements/lock-ml.txt
+dvc-studio-client==0.23.0  # via dvc, -c requirements/lock-ml.txt
+dvc-task==0.40.2          # via dvc, -c requirements/lock-ml.txt
+entrypoints==0.4.2        # via gto, -c requirements/lock-ml.txt
+et-xmlfile==2.0.0         # via openpyxl, -c requirements/lock-ml.txt
+exceptiongroup==1.3.1 ; python_full_version < '3.11'  # via anyio, celery, pytest, -c requirements/lock-ml.txt
+fastapi==0.162.0          # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+filelock==4.1.0 ; python_full_version < '3.11'  # via iterative-telemetry, -c requirements/lock-ml.txt
+filelock==4.2.4 ; python_full_version >= '3.11'  # via iterative-telemetry, -c requirements/lock-ml.txt
+flatten-dict==0.5.0       # via dvc, -c requirements/lock-ml.txt
+flufl-lock==9.2.0         # via dvc, -c requirements/lock-ml.txt
+fonttools==4.65.0 ; python_full_version < '3.11'  # via matplotlib, -c requirements/lock-ml.txt
+fonttools==4.67.0 ; python_full_version >= '3.11'  # via matplotlib, -c requirements/lock-ml.txt
+frozenlist==1.8.0         # via aiohttp, aiosignal, -c requirements/lock-ml.txt
+fsspec==2026.9.0          # via dvc, dvc-data, dvc-http, dvc-objects, scmrepo, -c requirements/lock-ml.txt
+funcy==2.1                # via dvc, dvc-data, dvc-objects, dvc-task, gto, scmrepo, -c requirements/lock-ml.txt
+geopandas==1.1.4 ; python_full_version < '3.11'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+geopandas==1.2.0 ; python_full_version >= '3.11'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+gitdb==4.0.12             # via gitpython, -c requirements/lock-ml.txt
+gitpython==3.2.1          # via scmrepo, -c requirements/lock-ml.txt
+grandalf==0.8             # via dvc, -c requirements/lock-ml.txt
+gto==1.10.1               # via dvc, -c requirements/lock-ml.txt
+h11==0.16.0               # via httpcore, uvicorn, -c requirements/lock-ml.txt
+httpcore==1.0.9           # via httpx, -c requirements/lock-ml.txt
+httpx==0.28.1             # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+hydra-core==1.3.8         # via dvc, -c requirements/lock-ml.txt
+idna==3.20                # via anyio, httpx, requests, yarl, -c requirements/lock-ml.txt
+iniconfig==2.3.1          # via pytest, -c requirements/lock-ml.txt
+iterative-telemetry==0.0.10  # via dvc, -c requirements/lock-ml.txt
+kiwisolver==1.5.1         # via matplotlib, -c requirements/lock-ml.txt
+kombu==5.6.2              # via celery, dvc, dvc-task, -c requirements/lock-ml.txt
+markdown-it-py==4.2.0     # via rich, -c requirements/lock-ml.txt
+matplotlib==3.10.9 ; python_full_version < '3.11'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+matplotlib==3.11.2 ; python_full_version >= '3.11'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+mdurl==0.1.2              # via markdown-it-py, -c requirements/lock-ml.txt
+multidict==7.1.0 ; python_full_version < '3.11'  # via aiohttp, yarl, -c requirements/lock-ml.txt
+multidict==7.2.1 ; python_full_version >= '3.11'  # via aiohttp, yarl, -c requirements/lock-ml.txt
+networkx==3.4.2 ; python_full_version < '3.11'  # via dvc, -c requirements/lock-ml.txt
+networkx==3.6.1 ; python_full_version == '3.11.*'  # via dvc, -c requirements/lock-ml.txt
+networkx==3.7 ; python_full_version >= '3.12'  # via dvc, -c requirements/lock-ml.txt
+numpy==2.2.6 ; python_full_version < '3.11'  # via contourpy, geopandas, matplotlib, pandas, pyogrio, rasterio, scipy, shapely, -c requirements/lock-ml.txt, cri (pyproject.toml)
+numpy==2.4.6 ; python_full_version == '3.11.*'  # via contourpy, geopandas, matplotlib, pandas, pyogrio, rasterio, scipy, shapely, -c requirements/lock-ml.txt, cri (pyproject.toml)
+numpy==2.5.4 ; python_full_version >= '3.12'  # via contourpy, geopandas, matplotlib, pandas, pyogrio, rasterio, scipy, shapely, -c requirements/lock-ml.txt, cri (pyproject.toml)
+omegaconf==2.3.1          # via dvc, hydra-core, -c requirements/lock-ml.txt
+openpyxl==3.1.5           # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+opentelemetry-api==1.45.1  # via fastapi, -c requirements/lock-ml.txt
+orjson==3.13.0 ; implementation_name == 'cpython'  # via dvc-data, sqltrie, -c requirements/lock-ml.txt
+packaging==26.3           # via dvc, geopandas, hydra-core, kombu, matplotlib, pyogrio, pytest, -c requirements/lock-ml.txt
+pandas==2.3.3 ; python_full_version < '3.11'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+pandas==3.1.0 ; python_full_version >= '3.11'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+pathspec==1.1.1           # via dvc, scmrepo, -c requirements/lock-ml.txt
+pillow==12.3.0 ; python_full_version < '3.11'  # via matplotlib, -c requirements/lock-ml.txt
+pillow==13.0.0 ; python_full_version >= '3.11'  # via matplotlib, -c requirements/lock-ml.txt
+platformdirs==4.12.4 ; python_full_version < '3.11'  # via dvc, -c requirements/lock-ml.txt
+platformdirs==4.13.5 ; python_full_version >= '3.11'  # via dvc, -c requirements/lock-ml.txt
+pluggy==1.7.0             # via pytest, -c requirements/lock-ml.txt
+prompt-toolkit==3.0.53    # via click-repl, -c requirements/lock-ml.txt
+propcache==0.5.4          # via aiohttp, yarl, -c requirements/lock-ml.txt
+psutil==7.2.2             # via dvc, flufl-lock, -c requirements/lock-ml.txt
+psycopg==3.3.6            # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+psycopg-binary==3.3.6 ; implementation_name != 'pypy'  # via psycopg, -c requirements/lock-ml.txt
+pyarrow==25.0.1           # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+pycparser==3.11 ; python_full_version < '3.11' and implementation_name != 'PyPy'  # via cffi, -c requirements/lock-ml.txt
+pycparser==3.12 ; python_full_version >= '3.11' and implementation_name != 'PyPy'  # via cffi, -c requirements/lock-ml.txt
+pydantic==2.14.1          # via fastapi, gto, pydantic-settings, -c requirements/lock-ml.txt
+pydantic-core==2.50.1     # via pydantic, -c requirements/lock-ml.txt
+pydantic-settings==2.15.0 ; python_full_version < '3.11'  # via gto, -c requirements/lock-ml.txt
+pydantic-settings==2.16.1 ; python_full_version >= '3.11'  # via gto, -c requirements/lock-ml.txt
+pydot==4.0.1              # via dvc, -c requirements/lock-ml.txt
+pygit2==1.18.2 ; python_full_version < '3.11'  # via scmrepo, -c requirements/lock-ml.txt
+pygit2==1.20.1 ; python_full_version >= '3.11'  # via scmrepo, -c requirements/lock-ml.txt
+pygments==2.21.0          # via pytest, rich, -c requirements/lock-ml.txt
+pygtrie==2.5.0 ; python_full_version < '3.11'  # via dvc, dvc-data, scmrepo, sqltrie, -c requirements/lock-ml.txt
+pygtrie==2.6.2 ; python_full_version >= '3.11'  # via dvc, dvc-data, scmrepo, sqltrie, -c requirements/lock-ml.txt
+pyogrio==0.13.0           # via geopandas, -c requirements/lock-ml.txt
+pyparsing==3.3.3          # via dvc, grandalf, matplotlib, pydot, rasterio, -c requirements/lock-ml.txt
+pyproj==3.7.1 ; python_full_version < '3.11'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+pyproj==3.7.2 ; python_full_version == '3.11.*'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+pyproj==3.8.0 ; python_full_version >= '3.12'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+pytest==9.1.1             # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+python-dateutil==3.0.0    # via celery, matplotlib, pandas, -c requirements/lock-ml.txt
+python-dotenv==1.2.4      # via pydantic-settings, -c requirements/lock-ml.txt
+pytz==2026.5 ; python_full_version < '3.11'  # via pandas, -c requirements/lock-ml.txt
+pywin32==312 ; sys_platform == 'win32'  # via dvc-task, -c requirements/lock-ml.txt
+pyyaml==6.0.3             # via omegaconf, -c requirements/lock-ml.txt, cri (pyproject.toml)
+rasterio==1.4.4           # via -c requirements/constraints.txt, -c requirements/lock-ml.txt, cri (pyproject.toml)
+requests==2.34.2          # via dvc, dvc-studio-client, iterative-telemetry, -c requirements/lock-ml.txt
+rich==15.0.0              # via dvc, gto, -c requirements/lock-ml.txt
+ruamel-yaml==0.19.1       # via dvc, gto, -c requirements/lock-ml.txt
+ruff==0.17.2              # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+scipy==1.15.3 ; python_full_version < '3.11'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+scipy==1.17.1 ; python_full_version == '3.11.*'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+scipy==1.18.1 ; python_full_version >= '3.12'  # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+scmrepo==3.6.2            # via dvc, gto, -c requirements/lock-ml.txt
+semver==3.1.0             # via gto, -c requirements/lock-ml.txt
+setuptools==84.2.1        # via zc-lockfile, -c requirements/lock-ml.txt
+shapely==2.1.2 ; python_full_version < '3.11'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+shapely==2.2.0 ; python_full_version >= '3.11'  # via geopandas, -c requirements/lock-ml.txt, cri (pyproject.toml)
+shortuuid==1.0.13         # via dvc, dvc-task, -c requirements/lock-ml.txt
+shtab==1.13.0             # via dvc, -c requirements/lock-ml.txt
+six==1.17.0               # via python-dateutil, -c requirements/lock-ml.txt
+smmap==5.0.3              # via gitdb, -c requirements/lock-ml.txt
+sqltrie==0.11.3           # via dvc-data, -c requirements/lock-ml.txt
+starlette==1.7.0 ; python_full_version < '3.11'  # via fastapi, -c requirements/lock-ml.txt
+starlette==1.10.0 ; python_full_version >= '3.11'  # via fastapi, -c requirements/lock-ml.txt
+tabulate==0.10.0          # via dvc, gto, -c requirements/lock-ml.txt, cri (pyproject.toml)
+tomli==2.5.0 ; python_full_version < '3.11'  # via pytest, -c requirements/lock-ml.txt
+tomlkit==0.15.2           # via dvc, -c requirements/lock-ml.txt
+tqdm==4.70.1              # via dvc, dvc-data, fsspec, scmrepo, -c requirements/lock-ml.txt
+typing-extensions==4.16.0  # via aiohttp, aiosignal, anyio, asyncssh, click-repl, cryptography, dulwich, exceptiongroup, fastapi, multidict, opentelemetry-api, psycopg, pydantic, pydantic-core, pydantic-settings, starlette, typing-inspection, uvicorn, -c requirements/lock-ml.txt
+typing-inspection==0.4.4  # via fastapi, pydantic, pydantic-settings, -c requirements/lock-ml.txt
+tzdata==2026.5            # via kombu, pandas, psycopg, python-dateutil, tzlocal, -c requirements/lock-ml.txt
+tzlocal==5.4.5            # via celery, -c requirements/lock-ml.txt
+urllib3==2.8.0            # via dulwich, requests, -c requirements/lock-ml.txt
+uvicorn==0.54.0           # via -c requirements/lock-ml.txt, cri (pyproject.toml)
+vine==5.1.0               # via amqp, celery, kombu, -c requirements/lock-ml.txt
+voluptuous==0.16.0        # via dvc, dvc-studio-client, -c requirements/lock-ml.txt
+wcwidth==0.9.4            # via prompt-toolkit, -c requirements/lock-ml.txt
+yarl==1.25.1              # via aiohttp, -c requirements/lock-ml.txt
+zc-lockfile==4.0          # via dvc, -c requirements/lock-ml.txt
