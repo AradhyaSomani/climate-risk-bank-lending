@@ -35,13 +35,14 @@ local file to check; their version is pinned in the config named below.
 |---|---|---|
 | EM-DAT (CRED) | free registration; raw data may not be redistributed | Register at public.emdat.be, filter Country = India, Disaster type = Flood and Storm, all years; export xlsx to `data/raw/emdat/`. Then `python -m cri.ingest.emdat data/raw/emdat/<file>.xlsx`. |
 | Sentinel-1 GRD scenes (Kerala 2018 and other events) | Earth Engine account | `pip install -e ".[gee]"`, `earthengine authenticate`, then `python -m cri.ingest.sentinel1 --kind backscatter ...` (see the Sentinel-1 data card). |
-| RBI district credit and deposits | Person B's ingest | See B's data cards (contract C2). |
+| RBI district credit and deposits (DBIE) | browser download (DBIE may ask for a captcha; RBI terms grant no reuse licence) | Follow the steps in `docs/data_cards/rbi.md` into `data/raw/rbi/`, then `python scripts/rbi_first_look.py`. |
 
 ## What is not redistributed in a release
 
 GFD-derived tables carry the CC BY-NC 4.0 condition, so any release that includes the
-hazard scores is non-commercial. EM-DAT rows and Sen1Floods11 chips are never published;
-only aggregates derived from them (validation numbers, model metrics) are.
+hazard scores is non-commercial. EM-DAT rows, Sen1Floods11 chips and the raw RBI files are
+never published; only tables and aggregates derived from them (validation numbers, model
+metrics, the district panel with its RBI source line) are.
 
 ## Running without any data
 

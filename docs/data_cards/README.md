@@ -1,7 +1,8 @@
 # Data cards
 
 One card per dataset: source, licence, coverage, how it is obtained, known problems and how the
-project uses it. Person A's hazard layers are below; RBI and census cards are Person B's.
+project uses it. Person A's hazard layers are below, with the RBI card (moved to A in
+October 2026); the census cards are Person B's.
 
 ## What may be published
 
@@ -17,6 +18,8 @@ project uses it. Person A's hazard layers are below; RBI and census cards are Pe
 | EM-DAT | **Never** | Counts and flags only, no row-level copy of EM-DAT fields |
 | DataMeet district boundaries | No (B owns `district_master`) | Yes (CC BY 4.0) |
 | Natural Earth land | No | Yes (public domain) |
+| RBI district deposits and credit (DBIE) | No (download steps only; the DVC remote is private to the team) | Yes, with the source acknowledged ("Reserve Bank of India, DBIE") |
+| NEX-GDDP-CMIP6 (not used yet) | No (large) | Yes (CC0 1.0) |
 
 Because the GFD licence is non-commercial, any release that includes GFD-derived scores is
 non-commercial too. Code is licensed separately (decided in Phase 5E).
@@ -35,3 +38,5 @@ non-commercial too. Code is licensed separately (decided in Phase 5E).
 | [natural_earth.md](natural_earth.md) | Natural Earth 10 m land |
 | [hazard_tables.md](hazard_tables.md) | A's processed hazard tables |
 | [events.md](events.md) | Event catalogue and treatment flags (C4) |
+| [rbi.md](rbi.md) | RBI district deposits and credit (BSR, DBIE) |
+| [nex_gddp_cmip6.md](nex_gddp_cmip6.md) | NEX-GDDP-CMIP6 daily projections (optional, Phase 4E) |
