@@ -10,6 +10,12 @@ appended to data/interim/flood_cnn/results.csv for the report.
     python -m cri.ml.flood_cnn.train --name sar_base16 --base 16 --epochs 15
     python -m cri.ml.flood_cnn.train --name sar_dem --channels vv vh dem slope
     python -m cri.ml.flood_cnn.train --name sar_noaug --no-augment
+    python -m cri.ml.flood_cnn.train --name sar_shuffled --shuffle-labels
+
+`--shuffle-labels` is the leakage check (Evaluation B5): the same training with the label
+masks of the training and validation patches permuted across patches. The test events are
+still scored against their real labels, so the model can only do as well as chance, which is
+calling every pixel water. A shuffled run is never kept as a model.
 """
 
 from __future__ import annotations
@@ -28,7 +34,14 @@ from cri import config
 from cri.ingest.sen1floods11 import chip_event
 from cri.ml import tracking
 from cri.ml.flood_cnn import baselines as bl
-from cri.ml.flood_cnn.data import Split, chips, load_chip, load_splits, split_chips
+from cri.ml.flood_cnn.data import (
+    Split,
+    chips,
+    load_chip,
+    load_splits,
+    shuffle_labels,
+    split_chips,
+)
 from cri.ml.flood_cnn.model import UNet, augment, dice_ce_loss
 
 log = logging.getLogger(__name__)
@@ -155,6 +168,49 @@ def run_experiment(name: str, cfg: dict, max_batches: int | None = None) -> pd.D
     return res
 
 
+def run_leakage_check(name: str, cfg: dict, max_batches: int | None = None,
+                      tolerance: float = 0.05) -> pd.DataFrame:
+    """Train on shuffled labels and score the real test labels. Collapsed means the mean test
+    IoU is no more than `tolerance` above the all-water chance level."""
+    data_cfg = cfg["data"]
+    parts = split_chips(chips(), data_cfg["test_events"], data_cfg["val_events"])
+    splits = load_splits(data_cfg)
+    seed = cfg["train"]["seed"]
+    splits["train"] = shuffle_labels(splits["train"], seed)
+    splits["val"] = shuffle_labels(splits["val"], seed + 1)
+    params = {"name": name, "shuffle_labels": True,
+              **{f"data.{k}": v for k, v in data_cfg.items()},
+              **{f"model.{k}": v for k, v in cfg["model"].items()},
+              **{f"train.{k}": v for k, v in cfg["train"].items()}}
+    with tracking.start_run("flood_cnn", params, run_name=name) as run:
+        model, history = train(splits, cfg, run, max_batches)
+        test = chip_scores(model, parts["test"], data_cfg["channels"]).assign(method=name)
+        chance = bl.chance_scores(parts["test"])
+        model_iou = float(test.loc[test.event == "mean", "iou_water"].iloc[0])
+        chance_iou = float(chance.loc[chance.event == "mean", "iou_water"].iloc[0])
+        collapsed = model_iou <= chance_iou + tolerance
+        run.log_metrics({"test_iou_shuffled": model_iou, "test_iou_all_water": chance_iou})
+        run.set_tags({"check": "shuffled_labels", "collapsed": collapsed})
+        res = pd.concat([test, chance], ignore_index=True).assign(
+            run=name, run_id=run.run_id, check="shuffled_labels", collapsed=collapsed,
+            best_epoch=int(history.val_iou.idxmax()), epochs=len(history),
+            train_minutes=round(history.seconds.sum() / 60, 1))
+        d = out_dir()
+        d.mkdir(parents=True, exist_ok=True)
+        # kept in interim for inspection only, never copied to data/models
+        torch.save({"state_dict": model.state_dict(), "config": cfg, "shuffle_labels": True},
+                   d / f"{name}.pt")
+        history.to_csv(d / f"{name}_history.csv", index=False)
+        res_path = d / "results.csv"
+        old = pd.read_csv(res_path) if res_path.exists() else pd.DataFrame()
+        if len(old):
+            old = old[old.run != name]
+        pd.concat([old, res], ignore_index=True).to_csv(res_path, index=False)
+    log.info("%s: test IoU %.3f on shuffled labels vs %.3f calling every pixel water -> %s",
+             name, model_iou, chance_iou, "collapsed" if collapsed else "LEAK: did not collapse")
+    return res
+
+
 def main(argv: list[str] | None = None) -> None:
     from cri import runlog
 
@@ -164,6 +220,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--base", type=int)
     p.add_argument("--epochs", type=int)
     p.add_argument("--no-augment", action="store_true")
+    p.add_argument("--seed", type=int, help="override train.seed (initial weights, batch order)")
+    p.add_argument("--shuffle-labels", action="store_true",
+                   help="leakage check: train on permuted label masks (never kept)")
     p.add_argument("--max-batches", type=int, help="cap batches per epoch (smoke runs)")
     p.add_argument("--threads", type=int)
     a = p.parse_args(argv)
@@ -179,7 +238,10 @@ def main(argv: list[str] | None = None) -> None:
         cfg["train"]["epochs"] = a.epochs
     if a.no_augment:
         cfg["train"]["augment"] = False
-    res = run_experiment(a.name, cfg, a.max_batches)
+    if a.seed is not None:
+        cfg["train"]["seed"] = a.seed
+    run = run_leakage_check if a.shuffle_labels else run_experiment
+    res = run(a.name, cfg, a.max_batches)
     print(res[res.event == "mean"][["method", "iou_water", "f1_water"]].to_string(index=False))
 
 

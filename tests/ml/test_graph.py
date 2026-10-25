@@ -71,6 +71,24 @@ def test_spatial_lag_wins_when_shocks_spill_over():
     assert np.isfinite(mean.h2_graph_conv)
 
 
+def test_shuffled_target_collapses_to_the_training_mean():
+    pytest.importorskip("torch")
+    y, events, ed, w = synthetic()
+    d = models.design(y, models.shock_matrix(events, ed, y.index, y.columns), w)
+    shuffled = models.shuffled_target(d, seed=1)
+    has = d.y.notna()
+    assert shuffled.y.isna().equals(d.y.isna())
+    assert sorted(shuffled.y[has]) == sorted(d.y[has]) and not shuffled.y.equals(d.y)
+    assert shuffled[models.OWN].equals(d[models.OWN])
+    kw = {"epochs": 150, "hidden": 8}
+    real = models.leave_one_event_out(d, events, ed, w, kw).set_index("event_id").loc["mean"]
+    # on the real target the shock terms carry most of the error a mean prediction makes
+    assert real.h0_no_graph < 0.5 * real.naive_train_mean
+    check = models.leakage_check(d, events, ed, w, kw, seed=1)
+    assert list(check.model) == models.MODELS
+    assert check.collapsed.all(), check
+
+
 def test_credit_growth_masks_series_breaks():
     q = pd.to_datetime(["2015-03-31", "2015-06-30", "2015-09-30"])
     panel = pd.DataFrame({"district_id": 1, "quarter_end": q, "bank_group": "all",

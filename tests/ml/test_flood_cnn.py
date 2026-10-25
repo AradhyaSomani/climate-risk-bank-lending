@@ -53,6 +53,20 @@ def test_split_by_event_has_no_leak():
         data.split_chips(t, ["India"], ["India"])
 
 
+def test_shuffle_labels_moves_masks_between_patches():
+    rng = np.random.default_rng(0)
+    x = rng.random((6, 2, 4, 4)).astype("float32")
+    y = np.stack([np.full((4, 4), i % 2, dtype="int8") for i in range(6)])
+    y[:, 0, 0] = np.arange(6)  # tag each mask so a permutation is visible
+    meta = pd.DataFrame({"chip": list("abcdef")})
+    s = data.shuffle_labels(data.Split(x, y, meta), seed=3)
+    assert s.x is x and s.meta is meta  # inputs untouched
+    assert sorted(s.y[:, 0, 0].tolist()) == list(range(6))  # the same masks...
+    assert s.y[:, 0, 0].tolist() != list(range(6))  # ...on other patches
+    for m in s.y:
+        assert (m == y[m[0, 0]]).all()  # each mask moved whole
+
+
 def test_patches_and_scaling():
     x = np.zeros((2, 512, 512), dtype="float32")
     y = np.zeros((512, 512), dtype="int8")
