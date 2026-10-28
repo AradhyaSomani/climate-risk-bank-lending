@@ -97,9 +97,13 @@ score", was added after seeing the seed-42 result and is logged as such in
 brightness split happens.
 
 ## Intended use and limits
-- Use: the flood map for events GFD missed (Kerala 2018), through
-  `python -m cri.ml.flood_cnn.predict <weights> <scene.tif> <out.tif>` on a backscatter export
-  (`python -m cri.ingest.sentinel1 --kind backscatter ...`, needs Earth Engine).
+- Use: the flood map for events GFD missed (Kerala 2018). `python -m cri.hazard.flood_extent
+  --s1` runs it on every backscatter export in `data/raw/sentinel1/`
+  (`python -m cri.ingest.sentinel1 --event <event_id> --kind backscatter`, needs Earth Engine)
+  and writes the district rows with source `s1_unet`; `cri.ml.flood_cnn.predict` does the
+  same for a single scene. The Kerala export covers central Kerala only (10 m for the whole
+  state is too large), so it is compared with the Otsu map there and does not become the
+  event's footprint, which needs every district of the state (`cri.events.catalogue`).
 - Tested on two events only. An IoU of 0.55 on India means about half the water pixels
   are matched. District flooded shares from it need the same checks as the Otsu map.
 - Radar cannot see water under dense canopy or in built-up areas (double bounce), so urban

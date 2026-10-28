@@ -8,6 +8,28 @@ flood:
   event_hit_share: 0.01      # a district is "flooded in an event" above this flooded share
   landcover: true            # add flooded built-up and cropland shares (ESA WorldCover 2021)
   keep_rasters: true         # keep downloaded GFD rasters in data/raw/gfd (DVC-tracked)
+sentinel1:
+  # Earth Engine exports for floods the Global Flood Database missed (Phase 1E, 2B-B).
+  # `python -m cri.ingest.sentinel1 --event <event_id>` reads the presets below. The area is
+  # the event's states (data/events/events_candidates.csv), cut to `bbox` when one is given.
+  # Dates are quoted so YAML keeps them as text.
+  drive_folder: cri-sentinel1   # Google Drive folder the exports land in
+  unet_model: data/models/flood_cnn/039b60853c0746e8b04591e1a4e330cf/sar_base16.pt
+  events:
+    FL-2018-KERALA:
+      # before: ahead of the monsoon onset (29 May 2018), so the July flooding in Kuttanad is
+      # not part of the reference; after: the 14 to 24 August peak
+      pre: ["2018-04-01", "2018-05-28"]
+      post: ["2018-08-14", "2018-08-24"]
+      orbit: DESCENDING
+      # central Kerala at 10 m for the U-Net check (about 1.3 GB); the whole state is too big
+      backscatter_bbox: [76.2, 9.0, 76.9, 10.3]
+    FL-2015-CHENNAI:
+      # for the comparison with GFD only: the event keeps its GFD footprint (source_pre2019)
+      bbox: [79.0, 11.4, 80.4, 14.0]
+      pre: ["2015-08-01", "2015-10-15"]
+      post: ["2015-11-10", "2015-12-10"]
+      orbit: DESCENDING
 cyclone:
   radius_km: 100             # district counted as exposed within this distance of the track
   min_grade: CS              # and at or above this IMD grade at closest approach
