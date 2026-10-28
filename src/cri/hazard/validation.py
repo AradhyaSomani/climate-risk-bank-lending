@@ -145,15 +145,24 @@ def emdat_states(scores: pd.DataFrame, records: pd.DataFrame,
     return pd.DataFrame(rows)
 
 
-def gfd_vs_s1(flood: pd.DataFrame) -> pd.DataFrame:
+def gfd_vs_s1(flood: pd.DataFrame, cand: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Each Sentinel-1 map against the GFD map of the same event, and the U-Net map against
+    the Otsu map. Sentinel-1 rows carry the catalogue id (FL-2015-CHENNAI) and GFD rows the
+    GFD id (GFD-4309); the candidate list links the two."""
+    if cand is None:
+        cand = pd.read_csv(config.REPO_ROOT / config.load("events")["candidates"], dtype=str)
+    gfd_id = {r.event_id: f"GFD-{r.gfd_dfo_id}" for r in cand.itertuples()
+              if isinstance(r.gfd_dfo_id, str)}
     rows = []
     s1 = flood[flood.source.isin(["s1_unet", "s1_otsu"])]
     for (ev, src), b in s1.groupby(["event_id", "source"]):
-        a = flood[(flood.event_id == ev) & (flood.source == "gfd")]
-        if len(a):
-            r = compare_sources(a, b)
-            rows.append({"event_id": ev, "s1_source": src, **{
-                k: (len(v) if isinstance(v, list) else v) for k, v in r.items()}})
+        refs = [("gfd", gfd_id.get(ev, ev))] + ([("s1_otsu", ev)] if src == "s1_unet" else [])
+        for ref, key in refs:
+            a = flood[(flood.event_id == key) & (flood.source == ref)]
+            if len(a):
+                r = compare_sources(a, b)
+                rows.append({"event_id": ev, "reference": ref, "s1_source": src, **{
+                    k: (len(v) if isinstance(v, list) else v) for k, v in r.items()}})
     return pd.DataFrame(rows)
 
 
@@ -227,11 +236,16 @@ def run(out: Path = REPORT) -> Path:
     parts.append("## 5. Global Flood Database against Sentinel-1\n")
     cmp = gfd_vs_s1(inputs["flood"]) if inputs["flood"] is not None else pd.DataFrame()
     if len(cmp):
+        parts.append("Each Sentinel-1 map (`s1_source`) against a `reference` map of the same "
+                     "event, over the districts both cover: Spearman correlation of flooded "
+                     "share, overlap (IoU) of the districts each counts as hit, and the mean "
+                     "absolute difference in flooded share.\n")
         parts.append(_md(cmp))
     else:
         parts.append("Pending: no Sentinel-1 extents yet (needs the Earth Engine export; "
                      "`python -m cri.ingest.sentinel1`). Chennai 2015 is the first event to "
-                     "compare, since Kerala 2018 is not in GFD.")
+                     "compare, since Kerala 2018 is not in GFD. For Kerala, the U-Net map "
+                     "of central Kerala is compared with the Otsu map instead.")
     parts.append("")
     parts.append("## 6. Eye check: tiers by state\n")
     scores_now = pd.read_parquet(scores_path) if scores_path.exists() else None

@@ -3,8 +3,12 @@
 Events come from data/events/events_candidates.csv (dates and the matching GFD and IMD ids
 were checked in Phase 0). Footprints come from the Phase 1 tables:
 
-- floods: `flood_extent_district_event` for the event's footprint (GFD now, Sentinel-1 once
-  exported). Treated above `flood.treated_share` of district area.
+- floods: `flood_extent_district_event` for the event's footprint. The source follows
+  `flood.source_pre2019` and `flood.source_post2018` in configs/hazard.yaml by the event's
+  start year, falling back to the others in the order U-Net, Otsu, GFD. A Sentinel-1 source
+  counts only if it has a row for every district of the event's states, so a map of part of
+  the area (the U-Net check over central Kerala) never becomes the footprint. Treated above
+  `flood.treated_share` of district area.
 - cyclones: `cyclone_exposure_district_event` for the IMD storm. Treated within
   `cyclone.treated_km` of the track at `cyclone.treated_grade` or stronger.
 
@@ -42,6 +46,34 @@ log = logging.getLogger(__name__)
 
 def quarter_end(ts) -> pd.Timestamp:
     return (pd.Timestamp(ts).to_period("Q").end_time).normalize()
+
+
+FLOOD_SOURCES = ("s1_unet", "s1_otsu", "gfd")
+
+
+def footprint_sources(start, flood_cfg: dict) -> list[str]:
+    """Flood sources in the order they are tried for an event starting at `start`."""
+    key = "source_pre2019" if pd.Timestamp(start).year < 2019 else "source_post2018"
+    first = flood_cfg.get(key)
+    return ([first] if first in FLOOD_SOURCES else []) + [s for s in FLOOD_SOURCES
+                                                          if s != first]
+
+
+def pick_footprint(flood: pd.DataFrame, event_id: str, gfd_dfo_id, start, flood_cfg: dict,
+                   state_ids: set[int]) -> tuple[str | None, str | None, pd.DataFrame]:
+    """(source, event key, rows) of the first usable flood map, or (None, None, empty)."""
+    for src in footprint_sources(start, flood_cfg):
+        key = event_id if src != "gfd" else f"GFD-{gfd_dfo_id}"
+        fp = flood[(flood.event_id == key) & (flood.source == src)]
+        if not len(fp):
+            continue
+        missing = state_ids - set(fp.district_id.astype(int))
+        if src != "gfd" and missing:
+            log.warning("%s: the %s map misses %d districts of the event's states; not used "
+                        "as the footprint", event_id, src, len(missing))
+            continue
+        return src, key, fp
+    return None, None, flood.iloc[0:0]
 
 
 def neighbours(edges: pd.DataFrame, ids) -> set[int]:
@@ -152,6 +184,7 @@ def build(processed: Path | None = None) -> list[Path]:
     from cri.geo.districts import load_districts
 
     district_state = load_districts().set_index("district_id").state
+    flood_sources = config.load("hazard")["flood"]
     rec_path = processed / "disaster_records.parquet"
     records = pd.read_parquet(rec_path) if rec_path.exists() else None
     emdat = (emdat_links(cand, records, cfg.get("emdat_slack_days", 3))
@@ -168,14 +201,11 @@ def build(processed: Path | None = None) -> list[Path]:
             rows = cyclone_rows(ev.event_id, cyc[cyc.event_id == eid], cfg["cyclone"])
             source = f"IMD best track {ev.imd_storm_id}; dates: {ev.date_source}"
         elif ev.type == "flood":
-            fp = pd.DataFrame()
-            for src in ("s1_unet", "s1_otsu", "gfd"):  # best available footprint
-                key = ev.event_id if src != "gfd" else f"GFD-{ev.gfd_dfo_id}"
-                fp = flood[(flood.event_id == key) & (flood.source == src)]
-                if len(fp):
-                    source = f"{src} footprint {key}; dates: {ev.date_source}"
-                    break
-            if len(fp):
+            state_ids = set(district_state.index[district_state.isin(ev.states.split(";"))])
+            src, key, fp = pick_footprint(flood, ev.event_id, ev.gfd_dfo_id, start,
+                                          flood_sources, state_ids)
+            if src:
+                source = f"{src} footprint {key}; dates: {ev.date_source}"
                 in_states = None
                 if cfg["flood"].get("restrict_to_states", False):
                     in_states = district_state.isin(ev.states.split(";"))
@@ -225,7 +255,7 @@ def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.parse_args(argv)
     runlog.setup_logging()
-    with runlog.run("events:catalogue", ["project", "paths", "events"]) as outputs:
+    with runlog.run("events:catalogue", ["project", "paths", "events", "hazard"]) as outputs:
         outputs += build()
 
 

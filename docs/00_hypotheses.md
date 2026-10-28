@@ -90,7 +90,9 @@ Copied from `configs/events.yaml` (2026-10-25); the file is the source if they e
   Treated districts from the current hazard tables: Kosi 18, Phailin 16, Hudhud 4, Chennai 3,
   Fani 22, Amphan 12. Kerala has none yet; its footprint must come from Sentinel-1
   (`docs/decision_log.md`, 2026-10-23), and it is in the main estimate only if that footprint
-  is built and frozen before its outcomes are looked at. RBI's quarterly district series has
+  is built and frozen before its outcomes are looked at. The footprint is the Sentinel-1
+  change-detection map with the windows in `configs/hazard.yaml` (`sentinel1`; proposed in
+  `docs/decision_log.md`, 2026-10-28). RBI's quarterly district series has
   no figures for September 2016 to March 2017 (`docs/00_rbi_audit.md`), so Chennai lacks
   quarters +3 to +5 and fails the completeness rule under "Window" as written. **Open:** drop Chennai
   from the pooled estimate, or require quarters −8 to +2 for every event. Decide before

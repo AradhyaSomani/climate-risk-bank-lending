@@ -58,3 +58,28 @@ def test_emdat_links_by_storm_id_or_dates_within_shared_states():
     })
     # record 3 overlaps FL-B's dates but not its state; record 4 is too late
     assert cat.emdat_links(cand, records, slack_days=3) == {"CY-A": "1", "FL-B": "2"}
+
+
+def test_footprint_sources_follow_the_hazard_config():
+    cfg = {"source_pre2019": "gfd", "source_post2018": "s1_unet"}
+    assert cat.footprint_sources("2015-11-10", cfg) == ["gfd", "s1_unet", "s1_otsu"]
+    assert cat.footprint_sources("2019-07-01", cfg) == ["s1_unet", "s1_otsu", "gfd"]
+
+
+def test_pick_footprint_keeps_gfd_and_skips_partial_sentinel1_maps():
+    cfg = {"source_pre2019": "gfd", "source_post2018": "s1_unet"}
+    flood = pd.DataFrame({
+        "event_id": ["GFD-4309"] * 2 + ["FL-C"] * 2 + ["FL-K"] * 3 + ["FL-K"],
+        "source": ["gfd"] * 2 + ["s1_otsu"] * 2 + ["s1_otsu"] * 3 + ["s1_unet"],
+        "district_id": [1, 2, 1, 2, 1, 2, 3, 2],
+        "flooded_share": 0.1,
+    })
+    # an event in GFD keeps its GFD map even when a Sentinel-1 map exists
+    src, key, fp = cat.pick_footprint(flood, "FL-C", "4309", "2015-11-10", cfg, {1, 2})
+    assert (src, key, len(fp)) == ("gfd", "GFD-4309", 2)
+    # the U-Net map covers one of three districts, so the Otsu map is used
+    src, key, fp = cat.pick_footprint(flood, "FL-K", None, "2018-08-08", cfg, {1, 2, 3})
+    assert (src, key, len(fp)) == ("s1_otsu", "FL-K", 3)
+    # no usable map at all
+    src, _, fp = cat.pick_footprint(flood, "FL-K", None, "2018-08-08", cfg, {1, 2, 3, 4})
+    assert src is None and fp.empty

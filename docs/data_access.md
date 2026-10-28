@@ -34,7 +34,7 @@ local file to check; their version is pinned in the config named below.
 | Dataset | Why manual | Steps |
 |---|---|---|
 | EM-DAT (CRED) | free registration; raw data may not be redistributed | Register at public.emdat.be, filter Country = India, Disaster type = Flood and Storm, all years; export xlsx to `data/raw/emdat/`. Then `python -m cri.ingest.emdat data/raw/emdat/<file>.xlsx`. |
-| Sentinel-1 GRD scenes (Kerala 2018 and other events) | Earth Engine account | `pip install -e ".[gee]"`, `earthengine authenticate`, then `python -m cri.ingest.sentinel1 --kind backscatter ...` (see the Sentinel-1 data card). |
+| Sentinel-1 GRD scenes (Kerala 2018 and other events) | noncommercial Earth Engine project (no billing) | `pip install -e ".[gee]"`, `earthengine authenticate`, then `python -m cri.ingest.sentinel1 --event FL-2018-KERALA --project <your project>` (and again with `--kind backscatter`). Copy the files from the Google Drive folder `cri-sentinel1` to `data/raw/sentinel1/`, then `python -m cri.hazard.flood_extent --s1` (see the Sentinel-1 data card). |
 | RBI district credit and deposits (DBIE) | browser download (DBIE may ask for a captcha; RBI terms grant no reuse licence) | Follow the steps in `docs/data_cards/rbi.md` into `data/raw/rbi/`, then `python scripts/rbi_first_look.py`. |
 
 ## Sharing data inside the team (DVC)

@@ -26,3 +26,9 @@
 
 - September 2016, December 2016 and March 2017 (the first BSR-7 entry's district statement stops at June 2016) and the June, September and December quarters from 2023 need a DBIE login to download, and DBIE has no sign-up. Decision (Aradhya): exclude them; the panel has a gap from June 2016 to June 2017 and only March figures from 2023. March 2017 from the annual volume is not spliced in, because it is on another basis.
 - Consequence: Chennai 2015 lacks quarters +3 to +5. Whether it is dropped or the completeness rule is relaxed is open in `docs/00_hypotheses.md` until Devna and Aradhya sign. Amphan's last quarter (June 2023) is missing too, after quarter +3.
+
+## 2026-10-28 Sentinel-1 footprints, before any export (A)
+
+- Which map becomes a flood event's footprint now follows `flood.source_pre2019` and `flood.source_post2018` in `configs/hazard.yaml` by the event's start year (GFD before 2019, the U-Net after), then the other sources. Until now the catalogue took any Sentinel-1 map first, so a Sentinel-1 export of Chennai 2015, made only for the comparison with GFD, would have replaced Chennai's GFD footprint. Rebuilt on the current tables, `event_district.parquet` is unchanged.
+- A Sentinel-1 map becomes a footprint only if it has a row for every district of the event's states. The U-Net export of Kerala covers central Kerala only (10 m for the whole state is about 18 GB), so Kerala's footprint will be the Otsu change-detection map, and the U-Net map is compared with it there (Phase 2B B6).
+- Kerala windows (proposed): before, 1 April to 28 May 2018, ahead of the monsoon onset on 29 May, so the July flooding in Kuttanad is not part of the reference; after, 14 to 24 August. They define Kerala's treated districts, so Devna and Aradhya agree them before signing the pre-registration. No outcome has been looked at.

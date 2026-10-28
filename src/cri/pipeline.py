@@ -24,6 +24,7 @@ STAGES: dict[str, list[str]] = {
     "data": [],
     "hazard": [
         "cri.hazard.flood_extent:build_gfd",
+        "cri.hazard.flood_extent:build_s1",
         "cri.hazard.cyclone_footprint:build",
         "cri.ingest.emdat:build_default",
         "cri.hazard.baseline:build",
@@ -38,7 +39,7 @@ STAGES: dict[str, list[str]] = {
 STAGE_CONFIGS: dict[str, list[str]] = {
     "data": ["project", "paths"],
     "hazard": ["project", "paths", "hazard"],
-    "events": ["project", "paths", "events", "ml/graph"],
+    "events": ["project", "paths", "events", "hazard", "ml/graph"],
     "stress": ["project", "paths", "scenarios"],
 }
 
