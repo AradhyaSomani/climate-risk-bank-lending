@@ -276,3 +276,35 @@ def read_folder(folder: str | Path, **kwargs) -> pd.DataFrame:
     if not files:
         raise FileNotFoundError(f"No .xlsx/.xls/.csv files in {folder}")
     return pd.concat([read_district_table(f, **kwargs) for f in files], ignore_index=True)
+
+
+INTERIM_FILE = "rbi_district_quarterly.parquet"
+
+
+def interim_path() -> Path:
+    from cri import config
+
+    return config.path("interim") / INTERIM_FILE
+
+
+def build(folder: str | Path | None = None, out: Path | None = None) -> Path:
+    """Read every quarterly district statement in data/raw/rbi/quarterly (Statement 4A of the
+    BSR-7 entries and of the 2023 onwards entry) into one long table in data/interim.
+
+    A quarter that appears in two files must carry the same figures in both; the copy from
+    the later file is dropped.
+    """
+    from cri import config
+
+    folder = Path(folder or config.path("raw_layers.rbi_quarterly"))
+    out = out or interim_path()
+    long = read_folder(folder)
+    key = ["quarter_end", "rbi_state", "rbi_district", "measure"]
+    long = long.drop_duplicates(key + ["amount_cr"], keep="first")
+    dup = long.duplicated(key, keep=False)
+    if dup.any():
+        raise ValueError(f"{int(dup.sum())} rows repeat a quarter with different figures "
+                         f"across files in {folder}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    long.to_parquet(out, index=False)
+    return out

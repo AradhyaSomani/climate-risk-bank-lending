@@ -1,6 +1,6 @@
 contract: C1
 name: districts
-version: 0.1.0
+version: 0.1.1
 producer: B
 consumer: A
 description: >
@@ -18,8 +18,8 @@ tables:
       state_code: {dtype: int, nullable: false, min: 1, max: 35, description: Census 2011 state code}
       population: {dtype: int, nullable: false, min: 1, description: Census 2011 total population}
       area_km2: {dtype: float, nullable: false, min: 0, description: Area computed from geometry in an equal-area projection}
-      urban_share: {dtype: float, nullable: true, min: 0, max: 1, description: Urban population over total, Census 2011}
-      split_flag: {dtype: bool, nullable: false, description: True if the district was later split in a way population weights approximate poorly}
+      urban_share: {dtype: float, nullable: true, min: 0, max: 1, description: "Urban households over all households, Census 2011 (the source has rural and urban households, not persons; docs/data_cards/census2011.md)"}
+      split_flag: {dtype: bool, nullable: false, description: "True if a later district took territory from it and from another 2011 district, so mapping it to one parent is approximate, or if its figures are shared by population where population is a poor guide (configs/crosswalk.yaml)"}
       geometry: {dtype: geometry, nullable: false, description: "MultiPolygon, EPSG:4326 (GeoParquet in the real file, WKT in the toy sample)"}
     checks: [row_count_640_if_full]
   crosswalk_rbi_to_c2011:
@@ -33,5 +33,5 @@ tables:
       valid_to: {dtype: date, nullable: true, description: Last quarter-end for which it applies; empty means still valid}
       district_id: {dtype: int, nullable: false, min: 1, max: 999, description: Census 2011 district receiving the share}
       weight: {dtype: float, nullable: false, min: 0.000001, max: 1, description: Population share of the RBI district assigned to this 2011 district}
-      match_type: {dtype: str, nullable: false, allowed: [exact, normalized, fuzzy, manual, split], description: How the name was matched}
+      match_type: {dtype: str, nullable: false, allowed: [exact, normalized, fuzzy, manual, split], description: "exact or normalized name match; fuzzy = a close spelling confirmed in configs/crosswalk.yaml or district_aliases.yaml; manual = a rename or a district created after 2011, decided there; split = a label shared by population"}
     checks: [weights_sum_to_one, valid_to_after_valid_from]
