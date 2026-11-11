@@ -1,0 +1,376 @@
+# Phase 1 B: how RBI's district names map to Census 2011 districts (contract C1).
+#
+# Read by cri.geo.crosswalk together with configs/district_aliases.yaml (Person A's list of
+# later names for Census 2011 districts, also used for EM-DAT). A name is resolved in this
+# order: `names` and `new_districts` below, then district_aliases.yaml, then an exact or
+# normalised match on the Census 2011 name. A name that none of these resolves stops the
+# build and is written to data/interim/crosswalk_review.csv with a fuzzy suggestion, so
+# every non-exact match is a decision recorded here, never an automatic fuzzy match.
+#
+# Keys under `names` and `new_districts` are the Census 2011 state, as in the boundary file.
+# District names are matched after cri.geo.names.normalise (case, punctuation, "district").
+
+# RBI state label -> Census 2011 state(s). A list means the district names are looked up in
+# each of those states (the 2020 merger of Dadra & Nagar Haveli with Daman & Diu).
+states:
+  TELANGANA: Andhra Pradesh
+  LADAKH: Jammu & Kashmir
+  ARUNACHAL PRADESH: Arunanchal Pradesh
+  DADRA & NAGAR HAVELI: Dadara & Nagar Havelli
+  DADRA AND NAGAR HAVELI AND DAMAN AND DIU: [Dadara & Nagar Havelli, Daman & Diu]
+  ANDAMAN & NICOBAR ISLANDS: Andaman & Nicobar Island
+  NCT OF DELHI: NCT of Delhi
+
+# Same district, other spelling or a later name (weight 1, every quarter).
+names:
+  Andaman & Nicobar Island: {}
+  Andhra Pradesh:
+    NELLORE: Sri Potti Sriramulu Nellore
+    ANANTHAPURAMU: Anantapur
+    RANGAREDDI: Rangareddy
+  Arunanchal Pradesh:
+    CHUNGLANG: Changlang
+    PAPUMPARE: Papum Pare
+  Assam:
+    MORIGAON: Marigaon
+    SIBSAGAR: Sivasagar
+    NORTH CACHAR HILLS: Dima Hasao
+  Bihar:
+    PASCHIMI CHAMPARAN: Pashchim Champaran
+    PURBI CHAMPARAN: Purba Champaran
+  Chhattisgarh:
+    DANTEWADA: Dakshin Bastar Dantewada
+    KANKER: Uttar Bastar Kanker
+    KAWARDHA: Kabeerdham
+  Gujarat:
+    AHMEDABAD: Ahmadabad
+  Haryana:
+    GURUGRAM: Gurgaon
+    NUH: Mewat
+  Himachal Pradesh:
+    KULU: Kullu
+    SIMLA: Shimla
+  Jammu & Kashmir:
+    BANDIPORA: Bandipore
+    BARAMULLA: Baramula
+    LEH LADAKH: Leh (ladakh)
+    POONCH: Punch
+    SHOPIAN: Shupiyan
+  Jharkhand:
+    HAZARIBAG: Hazaribagh
+    KODERMA: Kodarma
+    LOHARDAGGA: Lohardaga
+    PALAMAU: Palamu
+    PASCHIMI SINGHBHUM: Pashchimi Singhbhum
+    SAHEBGANJ: Sahibganj
+    SERAIKELA-KHARSAWAN: Saraikela-kharsawan
+  Karnataka:
+    BAGALKOTE: Bagalkot
+    BALLARI: Bellary
+    BANGALORE URBAN: Bangalore
+    BENGALURU URBAN: Bangalore
+    BENGALURU RURAL: Bangalore Rural
+    BENGALURU SOUTH: Ramanagara        # Ramanagara renamed in 2025
+    BELAGAVI: Belgaum
+    CHAMARAJANAGAR: Chamrajnagar
+    CHIKKAMAGALURU: Chikmagalur
+    DAKSHIN KANNAD: Dakshina Kannada
+    DAVANGERE: Davanagere
+    KALABURAGI: Gulbarga
+    MYSURU: Mysore
+    SHIVAMOGGA: Shimoga
+    TUMAKURU: Tumkur
+    UDIPI: Udupi
+    UTTAR KANNAD: Uttara Kannada
+    VIJAYAPURA: Bijapur
+  Kerala:
+    ALAPUZHA: Alappuzha
+  Madhya Pradesh:
+    NARMADAPURAM: Hoshangabad
+  Maharashtra:
+    AHILYANAGAR: Ahmadnagar
+    BULDHANA: Buldana
+    CHHATRAPATI SAMBHAJINAGAR: Aurangabad
+    DHARASHIV: Osmanabad
+    NASIK: Nashik
+  Manipur:
+    BISHENPUR: Bishnupur
+  Mizoram:
+    LAWNGTLAI: Lawangtlai
+    SIAHA: Saiha
+  Odisha:
+    ANGUL: Anugul
+    JAGATSINGHPUR: Jagatsinghapur
+    KHURDA: Khordha
+    NAWAPARA: Nuapada
+    NAWRANGPUR: Nabarangapur
+  Punjab:
+    FEROZPUR: Firozpur
+  Rajasthan:
+    DHOLPUR: Dhaulpur
+  Tamil Nadu:
+    TIRUNELVALI: Tirunelveli
+    TOOTHUKUDI: Thoothukkudi
+    VILLUPURAM: Viluppuram
+  Uttar Pradesh:
+    KANAUJ: Kannauj
+    KANSHIRAM NAGAR: Kansiram Nagar
+    RAI BARELI: Rae Bareli
+    SANT RAVIDAS NAGAR: Sant Ravi Das Nagar(bhadohi)
+    SIDHARTHANAGAR: Siddharth Nagar
+    KUSHI NAGAR: Kushinagar
+  Uttarakhand:
+    DEHRA DUN: Dehradun
+    UTTAR KASHI: Uttarkashi
+
+# Districts created after the Census 2011 boundaries were frozen. Each maps with weight 1 to
+# the Census 2011 district it was mostly carved from (`parent`). `also_from` lists other
+# Census 2011 districts that gave it territory: population weights cannot be computed for
+# those without sub-district data, so the whole district goes to the main parent and every
+# 2011 district named here gets split_flag = True (contract C1). Sources: state gazette
+# notifications as summarised on each district's Wikipedia page, checked against the drop in
+# RBI office counts in the quarter the new district first appears
+# (data/interim/crosswalk_review.csv, column office_drop).
+new_districts:
+  Andhra Pradesh:
+    # 2022 reorganisation of Andhra Pradesh
+    ALLURI SITHARAMA RAJU: {parent: Visakhapatnam, also_from: [East Godavari]}
+    ANAKAPALLI: {parent: Visakhapatnam}
+    ANNAMAYYA: {parent: Y.s.r., also_from: [Chittoor]}
+    BAPATLA: {parent: Guntur, also_from: [Prakasam]}
+    DR. B.R. AMBEDKAR KONASEEMA: {parent: East Godavari}
+    ELURU: {parent: West Godavari, also_from: [Krishna]}
+    KAKINADA: {parent: East Godavari}
+    NANDYAL: {parent: Kurnool}
+    NTR: {parent: Krishna}
+    PALNADU: {parent: Guntur}
+    PARVATHIPURAM MANYAM: {parent: Vizianagaram, also_from: [Srikakulam]}
+    SRI SATHYA SAI: {parent: Anantapur}
+    TIRUPATI: {parent: Chittoor, also_from: [Sri Potti Sriramulu Nellore]}
+    # 2016 reorganisation of Telangana (RBI from December 2017); Telangana was part of
+    # Andhra Pradesh in 2011
+    BHADRADRI (KOTHAGUDEM): {parent: Khammam}
+    HANUMAKONDA: {parent: Warangal, also_from: [Karimnagar]}
+    JAGITIAL: {parent: Karimnagar}
+    JANGAON: {parent: Warangal, also_from: [Nalgonda]}
+    JAYASHANKAR (BHUPALPALLI): {parent: Warangal, also_from: [Karimnagar]}
+    JOGULAMBA (GADWAL): {parent: Mahbubnagar}
+    KAMAREDDY: {parent: Nizamabad}
+    KOMRAM BHEEM (ASIFABAD): {parent: Adilabad}
+    MAHABUBABAD: {parent: Warangal, also_from: [Khammam]}
+    MANCHERIAL: {parent: Adilabad}
+    MEDCHAL-MALKAJGIRI: {parent: Rangareddy}
+    MULUGU: {parent: Warangal}
+    NAGARKURNOOL: {parent: Mahbubnagar}
+    NARAYANPET: {parent: Mahbubnagar}
+    NIRMAL: {parent: Adilabad}
+    PEDDAPALLI: {parent: Karimnagar}
+    RAJANNA(SIRCILLA): {parent: Karimnagar}
+    SANGAREDDY: {parent: Medak}
+    SIDDIPET: {parent: Medak, also_from: [Karimnagar, Warangal]}
+    SURYAPET: {parent: Nalgonda}
+    VIKARABAD: {parent: Rangareddy, also_from: [Mahbubnagar]}
+    WANAPARTHY: {parent: Mahbubnagar}
+    WARANGAL RURAL: {parent: Warangal}
+    WARANGAL URBAN: {parent: Warangal, also_from: [Karimnagar]}
+    YADADRI BHUVANAGIRI: {parent: Nalgonda}
+  Arunanchal Pradesh:
+    LEPARADA: {parent: West Siang}
+    LONGDING: {parent: Tirap}
+    LOWER SIANG: {parent: West Siang, also_from: [East Siang]}
+    NAMSAI: {parent: Lohit}
+    SIANG: {parent: West Siang, also_from: [East Siang]}
+  Assam:
+    BAJALI: {parent: Barpeta}
+    BISWANATH: {parent: Sonitpur}
+    CHARAIDEO: {parent: Sivasagar}
+    HOJAI: {parent: Nagaon}
+    MAJULI: {parent: Jorhat}
+    SOUTH SALMARA-MANKACHAR: {parent: Dhubri}
+    TAMULPUR: {parent: Baksa}
+    WEST KARBI ANGLONG: {parent: Karbi Anglong}
+  Chhattisgarh:
+    BALOD: {parent: Durg}
+    BALODABAZAR: {parent: Raipur}
+    BALRAMPUR: {parent: Surguja}
+    BEMETARA: {parent: Durg}
+    GARIYABAND: {parent: Raipur}
+    GAURELA-PENDRA-MARWAHI: {parent: Bilaspur}
+    KHAIRAGARH-CHHUIKHADAN-GANDAI: {parent: Rajnandgaon}
+    KONDAGAON: {parent: Bastar}
+    MANENDRAGARH-CHIRMIRI-BHARATPUR: {parent: Koriya}
+    MOHLA-MANPUR-AMBAGARH CHOUKI: {parent: Rajnandgaon}
+    MUNGELI: {parent: Bilaspur}
+    SAKTI: {parent: Janjgir-champa}
+    SARANGARH-BILAIGARH: {parent: Raigarh, also_from: [Raipur]}
+    SUKMA: {parent: Dakshin Bastar Dantewada}
+    SURAJPUR: {parent: Surguja}
+  Gujarat:
+    ARAVALLI: {parent: Sabar Kantha}
+    BOTAD: {parent: Bhavnagar, also_from: [Ahmadabad]}
+    CHHOTAUDEPUR: {parent: Vadodara}
+    DEVBHUMI DWARKA: {parent: Jamnagar}
+    GIR SOMNATH: {parent: Junagadh}
+    MAHISAGAR: {parent: Panch Mahals, also_from: [Kheda]}
+    MORBI: {parent: Rajkot, also_from: [Jamnagar, Surendranagar]}
+    VAV-THARAD: {parent: Banas Kantha}
+  Haryana:
+    CHARKI DADRI: {parent: Bhiwani}
+    HANSI: {parent: Hisar}
+  Karnataka:
+    VIJAYANAGARA: {parent: Bellary}
+  Madhya Pradesh:
+    AGAR-MALWA: {parent: Shajapur}
+    MAIHAR: {parent: Satna}
+    MAUGANJ: {parent: Rewa}
+    NIWARI: {parent: Tikamgarh}
+    PANDHURNA: {parent: Chhindwara}
+  Maharashtra:
+    PALGHAR: {parent: Thane}
+  Manipur:
+    JIRIBAM: {parent: Imphal East}
+    KAKCHING: {parent: Thoubal}
+    KAMJONG: {parent: Ukhrul}
+    KANGPOKPI: {parent: Senapati}
+    NONEY: {parent: Tamenglong}
+    TENGNOUPAL: {parent: Chandel}
+  Meghalaya:
+    EAST JAINTIA HILLS: {parent: Jaintia Hills}
+    WEST JAINTIA HILLS: {parent: Jaintia Hills}
+    EASTERN WEST KHASI HILLS: {parent: West Khasi Hills}
+    NORTH GARO HILLS: {parent: East Garo Hills}
+    SOUTH WEST GARO HILLS: {parent: West Garo Hills}
+    SOUTH WEST KHASI HILLS: {parent: West Khasi Hills}
+  Mizoram:
+    HNAHTHIAL: {parent: Lunglei}
+    KHAWZAWL: {parent: Champhai}
+    SAITUAL: {parent: Aizawl, also_from: [Champhai]}
+  Nagaland:
+    CHUMOUKEDIMA: {parent: Dimapur}
+  Punjab:
+    FAZILKA: {parent: Firozpur}
+    MALERKOTLA: {parent: Sangrur}
+    PATHANKOT: {parent: Gurdaspur}
+  Rajasthan:
+    # 2023 districts (RBI from March 2024; nine were abolished again in December 2024)
+    ANUPGARH: {parent: Ganganagar, also_from: [Bikaner]}
+    BALOTRA: {parent: Barmer}
+    BEAWAR: {parent: Ajmer, also_from: [Pali, Bhilwara, Rajsamand]}
+    DEEG: {parent: Bharatpur}
+    DIDWANA-KUCHAMAN: {parent: Nagaur}
+    DUDU: {parent: Jaipur}
+    GANGAPURCITY: {parent: Sawai Madhopur, also_from: [Karauli]}
+    JAIPUR RURAL: {parent: Jaipur}
+    JODHPUR RURAL: {parent: Jodhpur}
+    KEKRI: {parent: Ajmer, also_from: [Tonk]}
+    KHAIRTHAL-TIJARA: {parent: Alwar}
+    KOTPUTLI-BEHROR: {parent: Jaipur, also_from: [Alwar]}
+    NEEM KA THANA: {parent: Sikar, also_from: [Jhunjhunun]}
+    PHALODI: {parent: Jodhpur}
+    SALUMBER: {parent: Udaipur}
+    SANCHORE: {parent: Jalor}
+    SHAHPURA: {parent: Bhilwara}
+  Sikkim:
+    PAKYONG: {parent: East}
+    SORENG: {parent: West}
+  Tamil Nadu:
+    CHENGALPATTU: {parent: Kancheepuram}
+    KALLAKURICHI: {parent: Viluppuram}
+    MAYILADUTHURAI: {parent: Nagappattinam}
+    RANIPET: {parent: Vellore}
+    TENKASI: {parent: Tirunelveli}
+    TIRUPATHUR: {parent: Vellore}
+  Tripura:
+    SEPAHIJALA: {parent: West Tripura}
+  Uttar Pradesh:
+    # Amethi (2010) and the three 2011 districts came after the census froze boundaries
+    AMETHI: {parent: Sultanpur, also_from: [Rae Bareli]}
+    BHIM NAGAR: {parent: Moradabad, also_from: [Budaun]}       # Sambhal's first name
+    SAMBHAL: {parent: Moradabad, also_from: [Budaun]}
+    PANCHSHEEL NAGAR: {parent: Ghaziabad}                     # Hapur's first name
+    HAPUR: {parent: Ghaziabad}
+    PRABUDH NAGAR: {parent: Muzaffarnagar}                    # Shamli's first name
+    SHAMLI: {parent: Muzaffarnagar}
+  West Bengal:
+    ALIPURDUAR: {parent: Jalpaiguri}
+    JHARGRAM: {parent: Pashchim Medinipur}
+    KALIMPONG: {parent: Darjiling}
+    PASCHIM BARDHAMAN: {parent: Barddhaman}
+    PURBA BARDHAMAN: {parent: Barddhaman}
+
+# Census 2011 districts created between 2004 and 2011. Until a district first appears in
+# RBI's tables (found from the data), its figures sit inside its parent's, so the parent's
+# RBI row is shared between the parent and the children not yet reported, in proportion to
+# their Census 2011 population (the CEDA rule). These rows get match_type "split" and count
+# towards the panel's imputed_share. `also_from` works as above (split_flag).
+#
+# Districts that appear late only because RBI does not print districts with fewer than three
+# offices (East Kameng, Lower Dibang Valley, Upper Siang, Lawangtlai, Peren, Longleng,
+# Kiphire, Yanam) are not listed: their early quarters are missing, not inside a parent.
+pre_2011_children:
+  Andaman & Nicobar Island:
+    North & Middle Andaman: {parent: South Andaman}
+  Assam:
+    Baksa: {parent: Nalbari, also_from: [Barpeta, Kamrup]}
+    Chirang: {parent: Bongaigaon, also_from: [Kokrajhar]}
+    Udalguri: {parent: Darrang}
+  Chhattisgarh:
+    Bijapur: {parent: Dakshin Bastar Dantewada}
+    Narayanpur: {parent: Bastar}
+  Gujarat:
+    Tapi: {parent: Surat}
+  Haryana:
+    Mewat: {parent: Gurgaon, also_from: [Faridabad]}
+    Palwal: {parent: Faridabad}
+  Jammu & Kashmir:
+    Bandipore: {parent: Baramula}
+    Ganderbal: {parent: Srinagar}
+    Kishtwar: {parent: Doda}
+    Kulgam: {parent: Anantnag}
+    Ramban: {parent: Doda}
+    Reasi: {parent: Udhampur}
+    Samba: {parent: Jammu}
+    Shupiyan: {parent: Pulwama}
+  Jharkhand:
+    Khunti: {parent: Ranchi}
+    Ramgarh: {parent: Hazaribagh}
+    Saraikela-kharsawan: {parent: Pashchimi Singhbhum}
+    Simdega: {parent: Gumla}
+  Karnataka:
+    Chikkaballapura: {parent: Kolar}
+    Ramanagara: {parent: Bangalore Rural}
+    Yadgir: {parent: Gulbarga}
+  Madhya Pradesh:
+    Alirajpur: {parent: Jhabua}
+    Anuppur: {parent: Shahdol}
+    Ashoknagar: {parent: Guna}
+    Burhanpur: {parent: East Nimar}
+    Singrauli: {parent: Sidhi}
+  Maharashtra:
+    Mumbai Suburban: {parent: Mumbai}
+  Manipur:
+    Imphal East: {parent: Imphal West}
+  Punjab:
+    Barnala: {parent: Sangrur}
+    Sahibzada Ajit Singh Nagar: {parent: Rupnagar, also_from: [Patiala]}
+    Tarn Taran: {parent: Amritsar}
+  Rajasthan:
+    Pratapgarh: {parent: Chittaurgarh, also_from: [Udaipur, Banswara]}
+  Tamil Nadu:
+    Ariyalur: {parent: Perambalur}
+    Dharmapuri: {parent: Krishnagiri}    # RBI printed the undivided district as Krishnagiri until 2004-12
+    Tiruppur: {parent: Coimbatore, also_from: [Erode]}
+  Uttar Pradesh:
+    Kansiram Nagar: {parent: Etah}
+
+# RBI labels that stand for a whole state or territory with several Census 2011 districts.
+# RBI prints Delhi as one district, "NEW DELHI"; it is shared among the nine Census 2011
+# districts of Delhi by population (match_type "split"), and all nine are flagged.
+state_wide_labels:
+  NCT of Delhi: [NEW DELHI]
+
+# Districts whose pre-split figures are shared by population although population is a poor
+# guide to where credit sits (a financial centre split from its suburbs). Flagged too.
+poor_population_proxy:
+  Maharashtra: [Mumbai, Mumbai Suburban]
+  NCT of Delhi: [North West, North, North East, East, New Delhi, Central, West, South West, South]
