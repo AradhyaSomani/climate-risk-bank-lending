@@ -21,7 +21,12 @@ from cri import runlog
 log = logging.getLogger(__name__)
 
 STAGES: dict[str, list[str]] = {
-    "data": [],
+    "data": [
+        "cri.ingest.rbi_bsr:build",
+        "cri.geo.district_master:build",
+        "cri.geo.crosswalk:build",
+        "cri.exposure.panel:build",
+    ],
     "hazard": [
         "cri.hazard.flood_extent:build_gfd",
         "cri.hazard.flood_extent:build_s1",
@@ -37,7 +42,7 @@ STAGES: dict[str, list[str]] = {
 }
 
 STAGE_CONFIGS: dict[str, list[str]] = {
-    "data": ["project", "paths"],
+    "data": ["project", "paths", "crosswalk", "district_aliases", "panel"],
     "hazard": ["project", "paths", "hazard"],
     "events": ["project", "paths", "events", "hazard", "ml/graph"],
     "stress": ["project", "paths", "scenarios"],
