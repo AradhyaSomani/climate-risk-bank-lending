@@ -6,14 +6,14 @@ Team: Aradhya Somani (Person A, data and ML), Devna Roopesh (Person B, econometr
 
 **This is academic research.** No bank is being assessed as unsound. The RBI district data show outstanding credit and deposits by branch location, not defaults, so nothing here is a loss estimate, a solvency call or investment advice.
 
-## Where things stand (25 October 2026)
+## Where things stand (11 November 2026)
 
 | Phase | Done | Next |
 | --- | --- | --- |
 | 0. Feasibility | RBI audit: district deposits and credit every quarter from March 2004 to December 2022, with a gap from September 2016 to March 2017 (`docs/00_rbi_audit.md`). Location-basis test on March 2007 (`docs/00_location_basis.md`). Pre-registration drafted (`docs/00_hypotheses.md`). | Agree the two open items in the pre-registration, sign it and tag `prereg-v1`. Power check (0E). State banker committee comparison (0B2). |
-| 1. Data foundation | Configs and run log, flood extents (Global Flood Database), cyclone footprints (IMD), EM-DAT records linked to the events, hazard baseline, PostGIS loader, data tests and cards | District crosswalk (1B) and the RBI credit and deposit panel (1C). The Kerala 2018 flood extent needs Sentinel-1 through Earth Engine. |
-| 2. Hazard and exposure | District hazard indicators, composite scores and their validation | Lending exposure (2D to 2F), once the panel exists |
-| 2B. ML track | U-Net flood mapper and flood susceptibility model passed their gates; shuffled-label leakage checks (`docs/model_cards/`) | District graph model, once the panel exists |
+| 1. Data foundation | Configs and run log, flood extents (Global Flood Database), cyclone footprints (IMD), EM-DAT records linked to the events, hazard baseline, PostGIS loader, data tests and cards. District master and RBI-to-Census-2011 crosswalk (1B), quarterly credit and deposit panel for 640 districts, March 2004 to March 2026 (1C, `docs/eval_reports/panel_balance.md`) | Controls (1D); real series and growth rates; tag `data-v1`. The Kerala 2018 flood extent needs Sentinel-1 through Earth Engine. |
+| 2. Hazard and exposure | District hazard indicators, composite scores and their validation | Lending exposure (2D to 2F), now that the panel exists |
+| 2B. ML track | U-Net flood mapper and flood susceptibility model passed their gates; shuffled-label leakage checks (`docs/model_cards/`) | District graph model, now that the panel exists |
 | 3. Event study | Event catalogue and treatment flags | Estimators, after the panel and the signed pre-registration |
 | 4. Stress test | Scenarios and the stochastic event generator | The stress test itself, from the measured effects |
 | 5. Product | Read-only API, pinned environment, `make rebuild` | Dashboard, paper, release |

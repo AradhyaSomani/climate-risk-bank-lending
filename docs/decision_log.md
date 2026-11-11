@@ -32,3 +32,32 @@
 - Which map becomes a flood event's footprint now follows `flood.source_pre2019` and `flood.source_post2018` in `configs/hazard.yaml` by the event's start year (GFD before 2019, the U-Net after), then the other sources. Until now the catalogue took any Sentinel-1 map first, so a Sentinel-1 export of Chennai 2015, made only for the comparison with GFD, would have replaced Chennai's GFD footprint. Rebuilt on the current tables, `event_district.parquet` is unchanged.
 - A Sentinel-1 map becomes a footprint only if it has a row for every district of the event's states. The U-Net export of Kerala covers central Kerala only (10 m for the whole state is about 18 GB), so Kerala's footprint will be the Otsu change-detection map, and the U-Net map is compared with it there (Phase 2B B6).
 - Kerala windows (proposed): before, 1 April to 28 May 2018, ahead of the monsoon onset on 29 May, so the July flooding in Kuttanad is not part of the reference; after, 14 to 24 August. They define Kerala's treated districts, so Devna and Aradhya agree them before signing the pre-registration. No outcome has been looked at.
+
+## 2026-11-11 District crosswalk and RBI panel (B, built by Aradhya)
+
+- Geography: the 640 Census 2011 districts of the DataMeet boundary file, with Census 2011
+  population and an urban share from households (the source has no urban persons).
+- An RBI district name is matched only exactly, after normalisation, or by a decision written
+  in `configs/crosswalk.yaml` or `configs/district_aliases.yaml`. Fuzzy scores only suggest;
+  an unmatched name stops the build.
+- A district created after 2011 goes with weight 1 to the 2011 district it was mostly carved
+  from. Population shares across two or more 2011 parents would need sub-district (tehsil)
+  populations, which we do not have; those parents get `split_flag` instead (79 districts,
+  most from the 2016 Telangana, 2022 Andhra Pradesh and 2023 Rajasthan reorganisations).
+  The Rajasthan ones come after every main event window; the Telangana and Andhra Pradesh
+  ones fall inside the later windows, so a robustness run should drop flagged districts.
+- A 2011 district created between 2004 and 2011 is inside its parent's RBI label until RBI
+  first reports it; that label is shared by 2011 population (the CEDA rule), and the panel
+  records the shared part in `imputed_share`. Delhi's single label is shared among its nine
+  districts the same way. Mumbai and Delhi are flagged because population is a poor guide
+  to where credit is booked.
+- `series_break` marks the first quarter of each reporting regime: 2017-06-30 (after the
+  gap; bank credit instead of gross bank credit; quarter-end dates) and 2023-03-31 (built from
+  BSR-1 and BSR-2; March only). **For the pre-registration:** its rule "quarters flagged
+  `series_break` are missing for the outcome concerned" would, with this flag, drop June 2017
+  and March 2023 as well. Proposed reading, to settle before signing: the flag marks a
+  change in basis, the quarter-by-event fixed effects absorb a common level shift, and the
+  quarter is kept; a robustness run drops event windows that cross a break.
+- No district's figures were printed or plotted while building the panel. The checks used
+  coverage counts and office counts only. The outlier review against the source waits for
+  the signed pre-registration.
