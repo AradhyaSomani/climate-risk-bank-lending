@@ -1,6 +1,6 @@
 contract: C2
 name: panel
-version: 0.1.0
+version: 0.1.1
 producer: B
 consumer: A
 description: >
@@ -23,7 +23,7 @@ tables:
       sector: {dtype: str, nullable: false, allowed: [all, agriculture, industry, transport, professional_services, personal_loans, trade, finance, other]}
       amount_cr: {dtype: float, nullable: true, min: 0, description: Rupees crore, nominal. Null means RBI did not report it, never zero.}
       n_offices: {dtype: int, nullable: true, min: 0, description: Reporting offices behind the amount, where RBI gives it}
-      series_break: {dtype: bool, nullable: false, description: True for quarters on or after a known change in reporting or coverage, see docs/data_cards/rbi.md}
+      series_break: {dtype: bool, nullable: false, description: "True on the first quarter of each new reporting regime (2017-06-30 and 2023-03-31, configs/panel.yaml), so a change from the previous available quarter that crosses a break can be told apart; see docs/data_cards/rbi.md"}
       split_flag: {dtype: bool, nullable: false, description: Copied from C1 district_master.split_flag}
       imputed_share: {dtype: float, nullable: false, min: 0, max: 1, description: Share of the amount that came through a crosswalk weight below 1}
       data_version: {dtype: str, nullable: false, pattern: '^data-v\d+'}

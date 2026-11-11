@@ -72,3 +72,36 @@ def test_district_geometry_valid():
     assert d.geometry.is_valid.all()
     assert d.district_id.is_unique
     assert np.isclose(d.area_km2.sum(), 3.19e6, rtol=0.05)  # India incl. claimed areas
+
+
+def test_crosswalk_covers_every_rbi_figure():
+    """Phase 1 B: every RBI district-quarter with a figure maps to a 2011 district."""
+    from cri.exposure.panel import check_labels_used
+    from cri.ingest.rbi_bsr import interim_path
+
+    xw = _need("crosswalk_rbi_to_c2011.parquet")
+    if not interim_path().exists():
+        pytest.skip("RBI interim table not built")
+    check_labels_used(pd.read_parquet(interim_path()), xw)
+
+
+def test_panel_grid_and_keys():
+    """Phase 1 C/J: one row per district, quarter and measure for all 640 districts."""
+    p = _need("panel_credit_deposit.parquet")
+    assert p.district_id.nunique() == 640
+    n_q = p.quarter_end.nunique()
+    assert len(p) == 640 * n_q * 2
+    assert not p.duplicated(["district_id", "quarter_end", "bank_group", "measure",
+                             "sector"]).any()
+    assert (p.quarter_end == p.quarter_end + pd.offsets.QuarterEnd(0)).all()
+    assert (p.amount_cr.dropna() >= 0).all()
+    assert p.imputed_share.between(0, 1).all()
+
+
+def test_panel_test_states_complete():
+    """Kerala, Odisha and Tamil Nadu (the audit's test states) have every district in every
+    quarter, for both measures."""
+    p = _need("panel_credit_deposit.parquet")
+    m = _need("district_master.parquet")
+    ids = m.loc[m.state.isin(["Kerala", "Odisha", "Tamil Nadu"]), "district_id"]
+    assert p[p.district_id.isin(ids)].amount_cr.notna().all()

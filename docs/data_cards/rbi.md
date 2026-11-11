@@ -70,4 +70,59 @@ Status: downloaded on 2026-10-25 (BSR-7 quarterly 2004 to 2022, the 2023 onwards
 
 ## How it is read
 
-`src/cri/ingest/rbi_bsr.py` (`read_district_table`, `read_folder`) finds the header row, maps columns by keyword, reads the unit from the title rows, and converts to crore. It reads both a long file (one period, or a period column) and a wide statement with one block of columns per period (Statement 4A). It does not read the annual volumes yet; Phase 1 C adds a reader for Tables 2.4 / 2.14 and 5.9 / 3.9, whose layout changes between 2002, 2005, 2011 and 2014. `scripts/rbi_first_look.py` prints the audit numbers and plots the test states.
+`src/cri/ingest/rbi_bsr.py` (`read_district_table`, `read_folder`) finds the header row, maps columns by keyword, reads the unit from the title rows, and converts to crore. It reads both a long file (one period, or a period column) and a wide statement with one block of columns per period (Statement 4A). It does not read the annual volumes yet; a reader for Tables 2.4 / 2.14 and 5.9 / 3.9, whose layout changes between 2002, 2005, 2011 and 2014, is still to come (the annual sector split and the place-of-utilisation basis). `scripts/rbi_first_look.py` prints the audit numbers and plots the test states.
+
+## The quarterly panel (Phase 1 B and C, November 2026)
+
+`make data` runs four steps (`src/cri/pipeline.py`):
+
+1. `cri.ingest.rbi_bsr:build` reads the three Statement 4A files in `data/raw/rbi/quarterly/`
+   into `data/interim/rbi_district_quarterly.parquet`: 77 quarters (March 2004 to June 2016,
+   June 2017 to December 2022, March 2023 to March 2026), 821 state and district labels,
+   all in ₹ crore.
+2. `cri.geo.district_master:build` writes `district_master.parquet` (contract C1).
+3. `cri.geo.crosswalk:build` maps every label to Census 2011 districts
+   (`crosswalk_rbi_to_c2011.parquet`, contract C1). Every decision that is not an exact name
+   match is in `configs/crosswalk.yaml` (or Person A's `configs/district_aliases.yaml`), with
+   its reason, and listed in `data/interim/crosswalk_review.csv` for checking by hand.
+4. `cri.exposure.panel:build` writes `panel_credit_deposit.parquet` (contract C2) and the
+   coverage report `docs/eval_reports/panel_balance.md`.
+
+How labels become Census 2011 districts:
+
+- **Same district, other name** (about 570 exact, 67 close spellings confirmed by hand, about
+  40 renames such as Gurugram, Prayagraj, Kalaburagi): weight 1.
+- **Districts created after 2011** (about 140 labels, among them the 2016 Telangana and 2022
+  Andhra Pradesh reorganisations): weight 1 to the Census 2011 district they were mostly
+  carved from. Where another 2011 district also gave territory, both are flagged
+  `split_flag`. Each parent was checked against the drop in RBI's office counts in the
+  quarter the new label first appears.
+- **Census 2011 districts created between 2004 and 2011** (39 districts, for example Tapi,
+  Palwal, the eight Jammu and Kashmir districts of 2007, Mumbai Suburban): until a child
+  first appears in RBI's tables, its figures are inside its parent's label, so that label is
+  shared between parent and children by Census 2011 population (match_type `split`). Those
+  rows carry `imputed_share` > 0 in the panel.
+- **Delhi** is one RBI label ("NEW DELHI") for nine Census 2011 districts; it is shared by
+  population and all nine are flagged.
+- Labels that change in the middle of the 2017 file (Sikkim's four districts were renamed in
+  2017 and the old names kept a few offices until March 2018) are summed; office counts show
+  no double counting.
+
+Checks: every RBI figure falls in exactly one crosswalk interval (`check_labels_used`); each
+label's weights sum to 1 in every interval; all 640 districts are in the panel for every
+quarter; Kerala, Odisha and Tamil Nadu are complete; and office counts, which are not an
+outcome, are checked for jumps. The 14 jumps left (`docs/eval_reports/panel_balance.md`) are
+either the population-share approximation in the first quarter a pre-2011 child is reported
+(offices follow branches, not people: Mumbai, Mewat, Tarn Taran, Bandipore, Ganderbal, Imphal
+East, Tapi, Nalbari, North and Middle Andaman) or single-quarter blips in RBI's own counts
+(Gondiya in December 2008, Champhai in March 2019, Senapati in March 2019).
+
+Not reported (null amount, never zero): Kurung Kumey, Dibang Valley and Anjaw (Arunachal
+Pradesh) in every quarter, and a few small districts in some quarters, because RBI does not
+print districts with fewer than three offices. 98.8% of district-quarter-measure rows have a
+figure.
+
+Not done yet: real (deflated) series, the credit-deposit ratio and growth rates (they need a
+documented price index), the outlier review against the source (it means looking at
+district series around events, so it waits for the signed pre-registration), and the
+annual sector split.

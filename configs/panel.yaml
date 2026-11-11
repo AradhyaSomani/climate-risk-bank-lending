@@ -1,0 +1,24 @@
+# Phase 1 C: the quarterly credit and deposit panel (contract C2), cri.exposure.panel.
+
+# First quarter of each new reporting regime. series_break is True on these quarters, so a
+# change measured from the previous available quarter can be told apart from a real one.
+# Evidence for each is in docs/00_rbi_audit.md section 5 and docs/data_cards/rbi.md.
+series_breaks:
+  - quarter_end: 2017-06-30
+    reason: >-
+      First quarter after the gap (September 2016 to March 2017 are not available). From
+      September 2016 BSR-7 reports bank credit instead of gross bank credit (bills
+      rediscounted with RBI and other approved institutions left out), every quarter is dated
+      the last day of the quarter instead of the last reporting Friday, and population groups
+      use the 2011 Census.
+  - quarter_end: 2023-03-31
+    reason: >-
+      BSR-7 discontinued after December 2022; from March 2023 the district statement is built
+      from BSR-1 and BSR-2. Only March figures are available from here (they include RRBs);
+      the June, September and December quarters need a DBIE login and are excluded.
+
+# A district's office count moving by more than this factor between two reported quarters
+# (outside the breaks) is listed in the balance report as a crosswalk check.
+office_jump_ratio: 1.5
+
+balance_report: docs/eval_reports/panel_balance.md
