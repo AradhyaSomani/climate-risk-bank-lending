@@ -68,9 +68,11 @@
   IMD's download site cannot be reached from our cloud environment, CHIRPS is in Earth
   Engine next to the Sentinel-1 work, and it covers the whole 1991-2020 normal used for the
   anomaly.
-- Night lights: VIIRS monthly for quarterly variation from 2012, and the published
+- Night lights: VIIRS monthly for quarterly variation from 2014 (Earth Engine's stray-light
+  corrected series starts in January 2014), and the published
   harmonised DMSP-VIIRS annual series (Li et al. 2020) as the long series from 2000, instead
-  of bridging DMSP and VIIRS ourselves.
+  of bridging DMSP and VIIRS ourselves. Its DMSP and VIIRS parts both hold 2013; we take
+  2013 from DMSP, the series it continues, rather than averaging the two.
 - State loan waivers enter as flags by announcement quarter, with cooperative-only waivers
   kept apart. They are controls, set before any outcome is looked at; their dates still need
   checking against the state orders.

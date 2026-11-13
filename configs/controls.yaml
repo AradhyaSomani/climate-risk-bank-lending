@@ -20,11 +20,13 @@ products:
     scale_m: 5566
     reducer: mean
   ntl_viirs:
-    # VIIRS DNB monthly composite, stray-light corrected (avg_rad, nW/cm2/sr), April 2012
-    # onwards. District mean of the monthly average radiance.
+    # VIIRS DNB monthly composite, stray-light corrected (avg_rad, nW/cm2/sr). District mean
+    # of the monthly average radiance. Earth Engine holds it from January 2014 (`--check`,
+    # 13 November 2026: 150 months, 2014-01 to 2026-06); before that the harmonised series
+    # covers the years.
     collection: NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG
     band: avg_rad
-    start: "2012-04-01"
+    start: "2014-01-01"
     end: "2026-07-01"
     scale_m: 463.83
     reducer: mean
@@ -32,9 +34,11 @@ products:
     # Harmonised DMSP and VIIRS annual night lights, 1992 onwards, on the DMSP scale (0-63)
     # (Li, Zhou, Zhao and Zhao 2020, Scientific Data 7:168), in the Earth Engine community
     # catalogue. One consistent annual series across the 2013-14 switch between satellites.
+    # Both parts hold 2013 (`--check`, 13 November 2026: DMSP 2000-2013, VIIRS 2013-2021).
+    # 2013 is taken from DMSP, the series it continues, so no year averages the two.
     collections:
-      - projects/sat-io/open-datasets/Harmonized_NTL/dmsp
-      - projects/sat-io/open-datasets/Harmonized_NTL/viirs
+      - {id: projects/sat-io/open-datasets/Harmonized_NTL/dmsp, end: "2014-01-01"}
+      - {id: projects/sat-io/open-datasets/Harmonized_NTL/viirs, start: "2014-01-01"}
     band: b1
     start: "2000-01-01"
     end: "2022-01-01"        # the catalogue held 1992 to 2021 when this was written;

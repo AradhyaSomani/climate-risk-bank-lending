@@ -117,3 +117,19 @@ def test_district_batches_split_and_keep_ids():
     b = district_batches(m, size=2, simplify_deg=0.01)
     assert [len(x["features"]) for x in b] == [2, 1]
     assert [f["properties"]["district_id"] for x in b for f in x["features"]] == [1, 2, 3]
+
+
+def test_sources_cut_overlapping_parts():
+    from cri.ingest.ee_controls import sources
+
+    spec = {"start": "2000-01-01", "end": "2022-01-01",
+            "collections": [{"id": "dmsp", "end": "2014-01-01"},
+                            {"id": "viirs", "start": "2014-01-01"}]}
+    assert sources(spec) == [("dmsp", "2000-01-01", "2014-01-01"),
+                             ("viirs", "2014-01-01", "2022-01-01")]
+    assert sources({"start": "2014-01-01", "end": "2026-07-01", "collection": "v"}) == \
+        [("v", "2014-01-01", "2026-07-01")]
+    # a part entirely outside the window is dropped
+    assert sources({"start": "2015-01-01", "end": "2016-01-01",
+                    "collections": [{"id": "dmsp", "end": "2014-01-01"}, "viirs"]}) == \
+        [("viirs", "2015-01-01", "2016-01-01")]

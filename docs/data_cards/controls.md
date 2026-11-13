@@ -10,8 +10,8 @@ period. Settings are in `configs/controls.yaml`.
 | `ag_worker_share_2011` | Census 2011 | (cultivators + agricultural labourers) / all workers |
 | `literacy_2011` | Census 2011 | literates / total population (the Census rate uses ages 7+, so this is lower) |
 | `rain_mm`, `rain_anom` | CHIRPS v2.0 daily (Earth Engine `UCSB-CHG/CHIRPS/DAILY`) | Monthly totals averaged over the district, summed to quarters (all three months needed). Anomaly = quarter / mean of the same calendar quarter 1991-2020 - 1 |
-| `ntl_viirs` | VIIRS DNB monthly, stray-light corrected (`NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG`) | District mean of `avg_rad` (nW/cm²/sr), averaged over the quarter's months with data; from April 2012 |
-| `ntl_harmonized` | Harmonised DMSP and VIIRS annual night lights (Li, Zhou, Zhao and Zhao 2020, *Scientific Data* 7:168), Earth Engine community catalogue `projects/sat-io/open-datasets/Harmonized_NTL/{dmsp,viirs}` | DMSP scale (0-63), annual, same value for the four quarters of a year. The bridge across the 2013-14 change of satellite: the authors' harmonisation, not ours |
+| `ntl_viirs` | VIIRS DNB monthly, stray-light corrected (`NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG`) | District mean of `avg_rad` (nW/cm²/sr), averaged over the quarter's months with data; from January 2014, the first month Earth Engine holds |
+| `ntl_harmonized` | Harmonised DMSP and VIIRS annual night lights (Li, Zhou, Zhao and Zhao 2020, *Scientific Data* 7:168), Earth Engine community catalogue `projects/sat-io/open-datasets/Harmonized_NTL/{dmsp,viirs}` | DMSP scale (0-63), annual, same value for the four quarters of a year. The bridge across the 2013-14 change of satellite: the authors' harmonisation, not ours. Both parts hold 2013; 2013 is taken from the DMSP part |
 | `waiver_commercial`, `waiver_coop_only`, `quarters_since_waiver` | `loan_waivers` in `configs/controls.yaml` | State-level, copied to every district of the state |
 
 ## How the Earth Engine tables are made
