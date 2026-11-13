@@ -45,9 +45,13 @@ def read_ee_tables(folder: Path, product: str) -> pd.DataFrame:
     files = sorted(folder.glob(f"{product}_batch*.csv"))
     if not files:
         return pd.DataFrame(columns=["district_id", "period", "value"])
-    wide = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
-    if wide.district_id.duplicated().any():
-        raise ValueError(f"{product}: a district appears in two batch files")
+    wide = pd.concat([pd.read_csv(f).assign(_file=f.name) for f in files], ignore_index=True)
+    dup = wide[wide.district_id.duplicated(keep=False)]
+    if not dup.empty:
+        raise ValueError(
+            f"{product}: a district appears in more than one file "
+            f"({', '.join(sorted(dup._file.unique()))}). Google Drive names a second export "
+            "of the same name '<name> (1).csv'; keep only the newer copy of each batch")
     cols = [c for c in wide.columns if PERIOD_COL.match(c)]
     long = wide.melt(id_vars="district_id", value_vars=cols, var_name="col", value_name="value")
     parts = long.col.str.extract(PERIOD_COL)

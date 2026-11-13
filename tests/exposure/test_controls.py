@@ -140,3 +140,11 @@ def test_ntl_negative_radiance_set_to_zero():
                       "period": pd.to_datetime(["2015-01-01", "2015-02-01", "2015-03-01"]),
                       "value": [-0.03, 0.3, 0.6]})
     assert ntl_quarterly(m).ntl_viirs.iloc[0] == pytest.approx(0.3)
+
+
+def test_duplicate_export_names_the_files(tmp_path):
+    t = pd.DataFrame({"district_id": [1, 2], "p2004": [1.0, 2.0]})
+    t.to_csv(tmp_path / "ntl_harmonized_batch1.csv", index=False)
+    t.to_csv(tmp_path / "ntl_harmonized_batch1 (1).csv", index=False)
+    with pytest.raises(ValueError, match=r"batch1 \(1\)\.csv"):
+        read_ee_tables(tmp_path, "ntl_harmonized")

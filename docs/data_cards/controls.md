@@ -24,6 +24,35 @@ the Google Drive folder `cri-controls`, 160 districts per task. Boundaries are s
 that makes no difference, and for night lights it moves only pixels on the boundary. Copy the
 CSVs to `data/raw/controls/` (DVC tracks them with the rest of `data/raw`).
 
+## Exports so far
+
+First full export on 13 November 2026 (project `cri-earth-engine`, Drive folder
+`cri-controls`, 4 batches of 160 districts per product), after `--check` showed:
+
+| Product | Collection | Images in window | First | Last |
+| --- | --- | --- | --- | --- |
+| `rain` | `UCSB-CHG/CHIRPS/DAILY` | 12,965 days | 1991-01-01 | 2026-06-30 |
+| `ntl_viirs` | `NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG` | 150 months | 2014-01-01 | 2026-06-01 |
+| `ntl_harmonized` | `.../Harmonized_NTL/dmsp` (to 2013) | 14 years | 2000 | 2013 |
+| `ntl_harmonized` | `.../Harmonized_NTL/viirs` (from 2014) | 8 years | 2014 | 2021 |
+
+- Task ids: rain `H3E6SBNEGJDRBPX6KGKEXFDI`, `AVS5B4ETT6LHQXC7L7EUWBYA`,
+  `MAPM375CDQI2JV5RILLQI4PI`, `HO4TLCNLCTPRB6EHX46BELMI`; VIIRS `W5MQFU5AWJZTK75IZABDS7ZS`,
+  `FNX725OY7MJESK73OUF5A4KK`, `AKRTKRH2YI7DWPA4JYG4EN5M`, `HEP4PEMGHA6Y7WB2K4E4SUCY`;
+  harmonised `5LLJU675RJQJZDTXRMDLWTJI`, `LIOT7UWGMVMYFSLVPQBRE66P`,
+  `B3BAI3DJTZDVK4HVNIMCPGPJ`, `GPT5SN6L2MEXBJFWK7QSX25M`.
+- The harmonised series was exported twice. The first run (before the fix that takes 2013
+  from DMSP only) averaged the DMSP and VIIRS values for 2013; its files were replaced and
+  differ from the kept ones in 2013 only. The VIIRS monthly export ran with the old April
+  2012 start; Earth Engine holds nothing before 2014, so its files are the same as they would
+  be now.
+- Checks on the CSVs: all 640 districts in each product, no district in two batches. Rainfall
+  has every month from January 1991 to June 2026 with no gaps; the all-India district mean is
+  about 1,300 mm a year, highest in July (313 mm) and lowest in December (13 mm). 201 of the
+  72,000 VIIRS district-months are slightly negative (none below -0.05) and are set to 0.
+- `make data` afterwards: 57,600 rows; filled rain 100%, VIIRS 56% (2014 Q1 to 2026 Q2, 50 of
+  90 quarters), harmonised 80% (2004 to 2021, 72 of 90 quarters).
+
 `--check` lists, per product, how many source images fall in the window and the first and
 last date, so the configured end dates can be moved as the sources update.
 
@@ -51,8 +80,11 @@ Telangana's 2014 waiver is under Andhra Pradesh, its Census 2011 state.
 
 ## Known problems
 
-- Rainfall and night lights are empty until the Earth Engine CSVs are in
-  `data/raw/controls/`.
+- The harmonised series stops in 2021 and VIIRS monthly starts in 2014, so no night-light
+  series covers every quarter: use the harmonised series for 2004-2021 and VIIRS for later
+  quarters, or the two with an overlap check in 2014-2021.
+- When an export is run again, Google Drive keeps both files (the new one as
+  `<name> (1).csv`); `make data` stops and names the files until only one copy is left.
 - VIIRS monthly radiance is noisy in the monsoon (cloud) months and has gaps over the
   northern hills in summer; the quarterly mean uses whichever months have data.
 - State elections and other state policy shocks (task list Phase 1 D, fourth item) are not
