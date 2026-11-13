@@ -133,3 +133,10 @@ def test_sources_cut_overlapping_parts():
     assert sources({"start": "2015-01-01", "end": "2016-01-01",
                     "collections": [{"id": "dmsp", "end": "2014-01-01"}, "viirs"]}) == \
         [("viirs", "2015-01-01", "2016-01-01")]
+
+
+def test_ntl_negative_radiance_set_to_zero():
+    m = pd.DataFrame({"district_id": [1, 1, 1],
+                      "period": pd.to_datetime(["2015-01-01", "2015-02-01", "2015-03-01"]),
+                      "value": [-0.03, 0.3, 0.6]})
+    assert ntl_quarterly(m).ntl_viirs.iloc[0] == pytest.approx(0.3)
