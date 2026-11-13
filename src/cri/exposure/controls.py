@@ -79,9 +79,14 @@ def rain_quarterly(monthly: pd.DataFrame, normal: tuple[int, int]) -> pd.DataFra
 
 
 def ntl_quarterly(monthly: pd.DataFrame) -> pd.DataFrame:
+    """Quarter mean of the monthly radiance. The stray-light corrected composites hold small
+    negative district means where background noise is subtracted from dark land (201 of
+    72,000 district-months in the November 2026 export, none below -0.05); they are set to
+    0, the usual treatment, before averaging."""
     if monthly.empty:
         return pd.DataFrame(columns=["district_id", "quarter_end", "ntl_viirs"])
-    m = monthly.assign(quarter_end=quarter_end(monthly.period))
+    m = monthly.assign(quarter_end=quarter_end(monthly.period),
+                       value=monthly.value.clip(lower=0))
     out = m.groupby(["district_id", "quarter_end"]).value.mean().rename("ntl_viirs")
     return out.reset_index()
 
