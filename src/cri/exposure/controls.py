@@ -7,7 +7,7 @@ study period in configs/project.yaml:
   (cultivators and agricultural labourers) over all workers, literates over population.
 - Rainfall (CHIRPS): the quarter's total in mm (district mean), and its anomaly against the
   mean of the same calendar quarter over the normal period (`rain_normal`).
-- Night lights: VIIRS monthly radiance averaged over the quarter's months (from 2012), and
+- Night lights: VIIRS monthly radiance averaged over the quarter's months (from 2014), and
   the harmonised DMSP-VIIRS annual value of the quarter's year (to 2021), the long series
   that bridges the 2013-14 change of satellite (configs/controls.yaml).
 - State farm loan waivers: whether one covering commercial-bank loans was announced in the

@@ -66,16 +66,31 @@ def district_batches(master: gpd.GeoDataFrame, size: int, simplify_deg: float) -
     return out
 
 
+def sources(spec: dict) -> list[tuple[str, str, str]]:
+    """(collection, start, end) for each source of a product, inside the product's window.
+
+    `collections` entries are an id or {id, start, end}; the dates let two series that
+    both hold a year (the harmonised DMSP and VIIRS parts both hold 2013) be cut apart, so
+    no period averages the two."""
+    entries = spec.get("collections") or [spec["collection"]]
+    out = []
+    for e in entries:
+        e = {"id": e} if isinstance(e, str) else e
+        start = max(spec["start"], str(e.get("start", spec["start"])))
+        end = min(spec["end"], str(e.get("end", spec["end"])))
+        if start < end:
+            out.append((e["id"], start, end))
+    return out
+
+
 def product_image(ee, name: str, spec: dict):
     """One multi-band image: a band per period, named by band_name()."""
     step = step_of(name)
     starts = periods(spec["start"], spec["end"], step)
-    if "collections" in spec:
-        col = ee.ImageCollection(spec["collections"][0])
-        for c in spec["collections"][1:]:
-            col = col.merge(ee.ImageCollection(c))
-    else:
-        col = ee.ImageCollection(spec["collection"])
+    col = None
+    for cid, s, e in sources(spec):
+        part = ee.ImageCollection(cid).filterDate(s, e)
+        col = part if col is None else col.merge(part)
     col = col.select(spec["band"])
     bands = []
     for t in starts:
@@ -94,9 +109,8 @@ def check(ee, products: dict) -> pd.DataFrame:
     """Number of source images and first and last date in each product's window."""
     rows = []
     for name, spec in products.items():
-        cols = spec.get("collections") or [spec["collection"]]
-        for c in cols:
-            col = ee.ImageCollection(c).filterDate(spec["start"], spec["end"])
+        for c, s, e in sources(spec):
+            col = ee.ImageCollection(c).filterDate(s, e)
             n = col.size().getInfo()
             dates = col.aggregate_array("system:time_start").getInfo() if n else []
             rows.append({"product": name, "collection": c, "images": n,
