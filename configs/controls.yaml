@@ -1,0 +1,74 @@
+# Phase 1 D: controls and economic activity (cri.ingest.ee_controls, cri.exposure.controls).
+#
+# Weather and activity per district come from Earth Engine as tables (CSV), one export per
+# product and district batch, to the Google Drive folder below. Copy the CSVs to
+# data/raw/controls/ and `make data` turns them into controls_district_quarter.parquet.
+# Until the CSVs exist, those columns are empty and everything else is filled.
+
+drive_folder: cri-controls
+batch_size: 160              # districts per export task (keeps each request small)
+simplify_deg: 0.005          # boundary simplification before upload, about 500 m
+
+products:
+  rain:
+    # CHIRPS v2.0 daily precipitation (mm/day), 0.05 degrees, 1981 onwards. Summed to
+    # months, then averaged over the district.
+    collection: UCSB-CHG/CHIRPS/DAILY
+    band: precipitation
+    start: "1991-01-01"      # the 1991-2020 normal is the baseline for anomalies
+    end: "2026-07-01"
+    scale_m: 5566
+    reducer: mean
+  ntl_viirs:
+    # VIIRS DNB monthly composite, stray-light corrected (avg_rad, nW/cm2/sr), April 2012
+    # onwards. District mean of the monthly average radiance.
+    collection: NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG
+    band: avg_rad
+    start: "2012-04-01"
+    end: "2026-07-01"
+    scale_m: 463.83
+    reducer: mean
+  ntl_harmonized:
+    # Harmonised DMSP and VIIRS annual night lights, 1992 onwards, on the DMSP scale (0-63)
+    # (Li, Zhou, Zhao and Zhao 2020, Scientific Data 7:168), in the Earth Engine community
+    # catalogue. One consistent annual series across the 2013-14 switch between satellites.
+    collections:
+      - projects/sat-io/open-datasets/Harmonized_NTL/dmsp
+      - projects/sat-io/open-datasets/Harmonized_NTL/viirs
+    band: b1
+    start: "2000-01-01"
+    end: "2022-01-01"        # the catalogue held 1992 to 2021 when this was written;
+                             # `--check` lists the years it has now
+    scale_m: 1000
+    reducer: mean
+
+# Anomalies: a quarter's rainfall over the mean of the same calendar quarter in these years
+rain_normal: [1991, 2020]
+
+# State farm loan waivers (they can move district credit on their own, Phase 1 D). Census
+# 2011 states. `announced` is the date the waiver was announced or ordered; `scope` says
+# which lenders it covered, because a waiver of cooperative-bank loans only barely touches
+# scheduled commercial banks (our panel). Amounts are rupees crore as announced.
+# Sources: RBI, Report of the Internal Working Group to Review Agricultural Credit
+# (September 2019), which lists the waivers of 2014-15 to 2018-19 and their cost; SBI
+# Research, Special Report on Agriculture (18 July 2022), "Status of various farm loan
+# waivers". Exact announcement dates are from state government orders as reported in the
+# press; `checked: false` means the date is still to be checked against the order itself.
+loan_waivers:
+  - {state: ALL, announced: 2008-02-29, scheme: Agricultural Debt Waiver and Debt Relief Scheme, scope: all lenders, amount_cr: 71680, checked: false}
+  - {state: Andhra Pradesh, announced: 2014-08-14, scheme: Rythu Runa Mafi (Andhra Pradesh), scope: all lenders, amount_cr: 24000, checked: false}
+  - {state: Andhra Pradesh, announced: 2014-08-14, scheme: Rythu Runa Mafi (Telangana), scope: all lenders, amount_cr: 17000, checked: false}
+  - {state: Tamil Nadu, announced: 2016-05-23, scheme: Crop loan waiver for small and marginal farmers, scope: cooperative banks only, amount_cr: 5780, checked: false}
+  - {state: Uttar Pradesh, announced: 2017-04-04, scheme: Fasal Rin Mochan Yojana, scope: all lenders, amount_cr: 36359, checked: false}
+  - {state: Maharashtra, announced: 2017-06-24, scheme: Chhatrapati Shivaji Maharaj Shetkari Sanman Yojana, scope: all lenders, amount_cr: 34022, checked: false}
+  - {state: Punjab, announced: 2017-06-19, scheme: Crop loan waiver for small and marginal farmers, scope: all lenders, amount_cr: 10000, checked: false}
+  - {state: Karnataka, announced: 2017-06-21, scheme: Crop loan waiver, scope: cooperative banks only, amount_cr: 8165, checked: false}
+  - {state: Rajasthan, announced: 2018-02-12, scheme: Crop loan waiver, scope: cooperative banks only, amount_cr: 8000, checked: false}
+  - {state: Karnataka, announced: 2018-07-05, scheme: Crop loan waiver, scope: all lenders, amount_cr: 34000, checked: false}
+  - {state: Madhya Pradesh, announced: 2018-12-17, scheme: Jai Kisan Rin Mukti Yojana, scope: all lenders, amount_cr: 36500, checked: false}
+  - {state: Chhattisgarh, announced: 2018-12-17, scheme: Short-term crop loan waiver, scope: all lenders, amount_cr: 6100, checked: false}
+  - {state: Rajasthan, announced: 2018-12-19, scheme: Crop loan waiver, scope: all lenders, amount_cr: 18000, checked: false}
+  - {state: Assam, announced: 2018-12-21, scheme: Interest subvention and 25 percent waiver, scope: all lenders, amount_cr: 600, checked: false}
+  - {state: Maharashtra, announced: 2019-12-21, scheme: Mahatma Jyotirao Phule Shetkari Karjmukti Yojana, scope: all lenders, amount_cr: 20000, checked: false}
+  - {state: Jharkhand, announced: 2020-03-03, scheme: Krishi Rin Mafi Yojana, scope: all lenders, amount_cr: 2000, checked: false}
+  - {state: Tamil Nadu, announced: 2021-02-05, scheme: Crop loan waiver, scope: cooperative banks only, amount_cr: 12110, checked: false}

@@ -26,6 +26,7 @@ STAGES: dict[str, list[str]] = {
         "cri.geo.district_master:build",
         "cri.geo.crosswalk:build",
         "cri.exposure.panel:build",
+        "cri.exposure.controls:build",
     ],
     "hazard": [
         "cri.hazard.flood_extent:build_gfd",
@@ -42,7 +43,7 @@ STAGES: dict[str, list[str]] = {
 }
 
 STAGE_CONFIGS: dict[str, list[str]] = {
-    "data": ["project", "paths", "crosswalk", "district_aliases", "panel"],
+    "data": ["project", "paths", "crosswalk", "district_aliases", "panel", "controls"],
     "hazard": ["project", "paths", "hazard"],
     "events": ["project", "paths", "events", "hazard", "ml/graph"],
     "stress": ["project", "paths", "scenarios"],

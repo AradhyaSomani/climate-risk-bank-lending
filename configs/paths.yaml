@@ -18,6 +18,7 @@ raw_layers:
   natural_earth: data/raw/natural_earth
   census2011: data/raw/census2011
   rbi_quarterly: data/raw/rbi/quarterly
+  controls: data/raw/controls
 
 # Geometry used until B's district_master.parquet (contract C1) exists.
 district_geometry:
