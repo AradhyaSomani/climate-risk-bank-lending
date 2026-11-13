@@ -61,3 +61,16 @@
 - No district's figures were printed or plotted while building the panel. The checks used
   coverage counts and office counts only. The outlier review against the source waits for
   the signed pre-registration.
+
+## 2026-11-13 Controls (B, built by Aradhya)
+
+- Rainfall from CHIRPS (0.05 degrees, daily, from 1981) instead of IMD's gridded rainfall:
+  IMD's download site cannot be reached from our cloud environment, CHIRPS is in Earth
+  Engine next to the Sentinel-1 work, and it covers the whole 1991-2020 normal used for the
+  anomaly.
+- Night lights: VIIRS monthly for quarterly variation from 2012, and the published
+  harmonised DMSP-VIIRS annual series (Li et al. 2020) as the long series from 2000, instead
+  of bridging DMSP and VIIRS ourselves.
+- State loan waivers enter as flags by announcement quarter, with cooperative-only waivers
+  kept apart. They are controls, set before any outcome is looked at; their dates still need
+  checking against the state orders.

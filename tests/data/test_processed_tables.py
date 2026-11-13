@@ -105,3 +105,15 @@ def test_panel_test_states_complete():
     m = _need("district_master.parquet")
     ids = m.loc[m.state.isin(["Kerala", "Odisha", "Tamil Nadu"]), "district_id"]
     assert p[p.district_id.isin(ids)].amount_cr.notna().all()
+
+
+def test_controls_grid():
+    """Phase 1 D: one row per district and quarter; rates in range where filled."""
+    c = _need("controls_district_quarter.parquet")
+    assert c.district_id.nunique() == 640
+    assert len(c) == 640 * c.quarter_end.nunique()
+    assert not c.duplicated(["district_id", "quarter_end"]).any()
+    for col in ["urban_share_2011", "ag_worker_share_2011", "literacy_2011"]:
+        assert c[col].between(0, 1).all(), col
+    assert (c.rain_mm.dropna() >= 0).all()
+    assert (c.quarters_since_waiver.dropna() >= 0).all()
