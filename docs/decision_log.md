@@ -177,3 +177,19 @@ from the exposure tables, so every figure in it changes with the data.
 - Over 2004 to 2026 the all-district high-tier share barely moves; without the metros it
   rises by about four points. The 2017 series break moves deposit shares by one to two
   points, so trends are read within regimes.
+
+## 2026-11-14 Graph model against the spatial lag (Phase 2B-D, A)
+
+- Run after `prereg-v1`, as fixed in the model card before any result: leave one event out,
+  RMSE on treated districts, gate H2 below H1. Results in `docs/eval_reports/graph_comparison.md`.
+- The gate fails for credit and for deposits. The graph model (H2) is worse than the spatial
+  lag on all 11 events for both measures and worse than predicting the training mean. The
+  spatial lag (H1) does not beat the no-graph model (H0) on average. The shuffled-target check
+  collapses for all three models, so there is no leak.
+- H2 is not tuned further: the only data left to tune on are these held-out events. It is
+  listed as a negative result for the Phase 2B gate and is not used in any estimate.
+- Before the run, `credit_growth` was changed to run over every calendar quarter, so March to
+  March changes from 2023 on are no longer counted as quarterly growth. The 2023 cyclones have
+  no quarterly data and are not scored.
+- Phase 3F keeps the ring difference-in-differences against far controls as its spillover
+  estimate, with the `--ring 1` model comparison reported next to it.
