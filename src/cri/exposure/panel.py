@@ -15,7 +15,8 @@ with a null amount, never a missing row.
   crosses a break. The regimes are documented in docs/data_cards/rbi.md.
 
 Only `bank_group = all` and `sector = all` exist: RBI's district tables have no bank-group
-split and no quarterly sector split (docs/00_rbi_audit.md).
+split and no quarterly sector split (docs/00_rbi_audit.md). The annual sector split is a
+separate panel (cri.exposure.sector_panel).
 
 The module computes and writes the table and a coverage report. It does not print or plot any
 district's figures: the pre-registration (docs/00_hypotheses.md) is not signed yet.
@@ -77,7 +78,9 @@ def check_labels_used(rbi: pd.DataFrame, xw: pd.DataFrame) -> None:
     m = has.merge(xw, left_on=["rbi_state", "rbi_district"],
                   right_on=["rbi_state", "rbi_name"], how="left")
     inside = _inside(m)
-    covered = m[inside].groupby(["rbi_state", "rbi_district", "quarter_end", "measure"]).size()
+    keys = ["rbi_state", "rbi_district", "quarter_end", "measure"] + \
+        [c for c in ("bank_group", "sector") if c in has.columns]
+    covered = m[inside].groupby(keys).size()
     lost = len(has) - len(covered)
     if lost:
         raise ValueError(f"{lost} RBI rows with a figure fall outside every crosswalk interval")

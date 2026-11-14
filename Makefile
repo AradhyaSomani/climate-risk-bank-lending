@@ -2,7 +2,7 @@ PY ?= python
 DATABASE_URL ?= postgresql://postgres@localhost:5432/cri
 
 .PHONY: install install-pinned install-pinned-ml lock lint test contracts ci data hazard events \
-	stress all power exposure report1 rebuild dvc-remote dvc-track db api api-sample checksums
+	stress all power sectors exposure report1 rebuild dvc-remote dvc-track db api api-sample checksums
 
 install:
 	$(PY) -m pip install -e ".[geo,api,dev,report]"
@@ -56,6 +56,11 @@ all: stress
 # Phase 0 E power check, blind to post-event outcomes (docs/eval_reports/power_check.md)
 power:
 	$(PY) -m cri.events.power
+
+# Annual credit by sector (also part of `make data`)
+sectors:
+	$(PY) -m cri.ingest.rbi_annual
+	$(PY) -m cri.exposure.sector_panel
 
 # Phase 2 D exposure tables, and Report 1 from them (docs/report1_exposure.md)
 exposure:

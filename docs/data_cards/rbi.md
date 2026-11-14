@@ -70,7 +70,47 @@ Status: downloaded on 2026-10-25 (BSR-7 quarterly 2004 to 2022, the 2023 onwards
 
 ## How it is read
 
-`src/cri/ingest/rbi_bsr.py` (`read_district_table`, `read_folder`) finds the header row, maps columns by keyword, reads the unit from the title rows, and converts to crore. It reads both a long file (one period, or a period column) and a wide statement with one block of columns per period (Statement 4A). It does not read the annual volumes yet; a reader for Tables 2.4 / 2.14 and 5.9 / 3.9, whose layout changes between 2002, 2005, 2011 and 2014, is still to come (the annual sector split and the place-of-utilisation basis). `scripts/rbi_first_look.py` prints the audit numbers and plots the test states.
+`src/cri/ingest/rbi_bsr.py` (`read_district_table`, `read_folder`) finds the header row, maps columns by keyword, reads the unit from the title rows, and converts to crore. It reads both a long file (one period, or a period column) and a wide statement with one block of columns per period (Statement 4A). The annual Table 5.9 / 3.9 (credit by district and occupation) has its own reader, `src/cri/ingest/rbi_annual.py` (below). Tables 2.4 / 2.14 (place of sanction, annual) are not read: the quarterly statement covers that basis. `scripts/rbi_first_look.py` prints the audit numbers and plots the test states.
+
+## The annual sector panel (Phase 1 C, November 2026)
+
+`make data` also runs two steps for the sector split, the only district table with one:
+
+1. `cri.ingest.rbi_annual:build` finds Table 5.9 (to 2018) or 3.9 (from 2019) in each annual
+   volume and in `2026_tables/`, March 2002 to March 2026 (25 years), and reads the eight
+   top-level occupations and the district total into `data/interim/rbi_annual_occupation.parquet`
+   (rupees crore). Three layouts: 2002 to 2010 one sheet per state with districts across the
+   columns, 2011 to 2013 one sheet with a 'STATE: ... DISTRICT: ...' line above each
+   district, 2014 on one row per district and occupation.
+2. `cri.exposure.sector_panel:build` maps the labels to Census 2011 districts with the
+   quarterly crosswalk's rules plus the annual-only additions in `configs/rbi_annual.yaml`
+   (`crosswalk`), and writes `data/processed/panel_credit_sector.parquet`: per district and
+   March, credit in agriculture, industry, services (transport operators, professional
+   services, trade, finance), personal loans, other, and all, `basis = utilisation`.
+   `crosswalk_annual_to_c2011.parquet` and `data/interim/crosswalk_annual_review.csv` record
+   the mapping.
+
+What the tables get wrong, and what the reader does (`configs/rbi_annual.yaml`):
+
+- **Units.** The 2005 and 2006 sheets say rupees lakh; the figures are in thousand (in lakh
+  the all-India total would be 115 and 151 lakh crore against 8.8 in 2004). The build stops
+  if all-India credit moves by more than 1.6 times in a year.
+- **Copied columns.** The March 2006 Haryana sheet repeats six districts' figures under six
+  other names; all twelve are left out that year. The build stops on any other repeat.
+- **Mislabelled column.** March 2009 heads South Andaman's column NICOBAR.
+- **Totals.** Each district's occupations are checked against its total (1%): a blank
+  occupation is filled with the difference (West Bengal 2010, Finance), and where a typo
+  remains, the side further from the district's total in the year before and after is taken
+  as wrong (Ahmedabad and Jaipur 2010 totals replaced by the sum; for Rajkot 2007 and seven
+  others the split is left missing and the total kept). The 15 cases are listed in
+  `data/interim/rbi_annual_review.csv`.
+- **Labels.** Delhi is one label except in March 2019, when it is split into eleven; 2019 is
+  added back together. Delhi is shared across its Census districts by population, as in the
+  quarterly panel. Spelling slips and districts created after 2011 are in `crosswalk`.
+
+All-India credit in the annual tables is within 1.3% of the quarterly March figure in every year
+(the two bases count the same loans in different places). The `xlrd` reader rejects the 2014
+file; `python-calamine` reads every year.
 
 ## The quarterly panel (Phase 1 B and C, November 2026)
 
