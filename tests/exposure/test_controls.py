@@ -7,9 +7,11 @@ from shapely.geometry import box
 
 from cri.exposure.controls import (
     build_controls,
+    election_flags,
     ntl_quarterly,
     rain_quarterly,
     read_ee_tables,
+    shock_flags,
     waiver_flags,
 )
 from cri.ingest.ee_controls import band_name, district_batches, periods
@@ -148,3 +150,41 @@ def test_duplicate_export_names_the_files(tmp_path):
     t.to_csv(tmp_path / "ntl_harmonized_batch1 (1).csv", index=False)
     with pytest.raises(ValueError, match=r"batch1 \(1\)\.csv"):
         read_ee_tables(tmp_path, "ntl_harmonized")
+
+
+def test_waiver_region_covers_part_of_a_state():
+    regions = {"east_a": {"state": "A", "district_ids": [2]}}
+    w = waiver_flags([{"region": "east_a", "announced": "2017-05-01", "scope": "all"}],
+                     _master(), QUARTERS, regions).set_index(["district_id", "quarter_end"])
+    assert w.waiver_commercial[(2, Q("2017-06-30"))]
+    assert not w.waiver_commercial[(1, Q("2017-06-30"))]
+    with pytest.raises(ValueError, match="outside A"):
+        waiver_flags([{"region": "bad", "announced": "2017-05-01", "scope": "all"}],
+                     _master(), QUARTERS, {"bad": {"state": "A", "district_ids": [3]}})
+
+
+def test_election_flags():
+    assembly = [{"state": "A", "results": "2017-03-11"},
+                {"state": "A", "results": "2021-05-02"},   # after the window: still counted
+                {"state": "B", "results": "2017-08-20"}]
+    e = election_flags(assembly, ["2017-05-16"], _master(), QUARTERS) \
+        .set_index(["district_id", "quarter_end"])
+    assert e.election_state[(1, Q("2017-03-31"))]
+    assert not e.election_state[(3, Q("2017-03-31"))]
+    assert e.election_general[(3, Q("2017-06-30"))]
+    assert e.quarters_to_state_election[(1, Q("2017-03-31"))] == 0
+    assert e.quarters_to_state_election[(1, Q("2017-06-30"))] == 16   # to 2021 Q2
+    assert e.quarters_to_state_election[(3, Q("2017-06-30"))] == 1
+    assert pd.isna(e.quarters_to_state_election[(3, Q("2017-12-31"))])
+    empty = election_flags([], [], _master(), QUARTERS)
+    assert not empty.election_state.any() and empty.quarters_to_state_election.isna().all()
+
+
+def test_shock_flags():
+    shocks = [{"state": "B", "date": "2017-08-05", "name": "x"},
+              {"state": "B", "date": "2017-09-01", "name": "y"}]
+    s = shock_flags(shocks, _master(), QUARTERS).set_index(["district_id", "quarter_end"])
+    assert s.state_shock[(3, Q("2017-09-30"))]
+    assert s.state_shock_name[(3, Q("2017-09-30"))] == "x; y"
+    assert not s.state_shock[(1, Q("2017-09-30"))]
+    assert pd.isna(s.state_shock_name[(1, Q("2017-09-30"))])

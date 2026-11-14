@@ -117,3 +117,21 @@ def test_controls_grid():
         assert c[col].between(0, 1).all(), col
     assert (c.rain_mm.dropna() >= 0).all()
     assert (c.quarters_since_waiver.dropna() >= 0).all()
+
+
+def test_controls_elections_and_shocks():
+    """Every district with an assembly has a results quarter in the window; UTs without one
+    have none; Telangana and the rest of Andhra Pradesh vote apart from 2018."""
+    c = _need("controls_district_quarter.parquet")
+    m = _need("district_master.parquet")[["district_id", "state"]]
+    c = c.merge(m, on="district_id")
+    no_assembly = {"Andaman & Nicobar Island", "Chandigarh", "Dadara & Nagar Havelli",
+                   "Daman & Diu", "Lakshadweep"}
+    per_district = c.groupby(["state", "district_id"]).election_state.sum()
+    assert (per_district.drop(index=list(no_assembly), level="state") >= 3).all()
+    assert (per_district.loc[list(no_assembly)] == 0).all()
+    q = c.set_index(["district_id", "quarter_end"])
+    assert q.election_state[(536, pd.Timestamp("2018-12-31"))]       # Hyderabad
+    assert not q.election_state[(547, pd.Timestamp("2018-12-31"))]   # Krishna
+    assert (c.quarters_to_state_election.dropna() >= 0).all()
+    assert c.election_general.groupby(c.quarter_end).all().sum() == 5

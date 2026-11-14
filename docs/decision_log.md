@@ -106,3 +106,16 @@
   the Otsu footprint as the primary Kerala definition (it covers the whole state and the rule
   was fixed first), and decide before signing whether a robustness run treats the PDNA
   worst-hit districts instead. Only hazard maps were looked at; no credit or deposit figures.
+
+## 2026-11-14 Elections and state shocks as controls (B, by Aradhya)
+
+- State assembly and Lok Sabha results enter as flags in the results quarter, with the
+  quarters until the next assembly result, because agricultural credit from public-sector
+  banks rises before state elections (Cole 2009). Counting days, not polling days: the
+  result is what ends the campaign promises (waivers are announced after it).
+- Telangana and the rest of Andhra Pradesh get their own elections and 2014 waivers through
+  district lists (`regions`), since the panel stays on Census 2011 districts.
+- Five state policy shocks are listed (Andhra Pradesh microfinance ordinance 2010 and
+  bifurcation 2014, Kashmir 2016 and 2019, Manipur 2023). Nationwide shocks are left to the
+  quarter fixed effects. Set before any outcome is looked at; dates to be checked against
+  the orders and ECI reports.
