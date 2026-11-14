@@ -2,7 +2,8 @@
 
 Needs B's panel (`panel_credit_deposit.parquet`, contract C2) and the event catalogue
 (`events.parquet`, `event_district.parquet`, contract C4). Until both exist it says what is
-missing and stops.
+missing and stops. It also stops until the pre-registration is tagged (`prereg-v1`), since the
+errors it reports are measured on post-event credit growth of treated districts.
 
     python -m cri.ml.graph.run
     python -m cri.ml.graph.run --shuffle-target     # leakage check (Evaluation B5)
@@ -15,7 +16,7 @@ import logging
 
 import pandas as pd
 
-from cri import config
+from cri import config, prereg
 from cri.ml import tracking
 from cri.ml.graph import models
 from cri.ml.graph.build import load_graph, row_normalised
@@ -40,6 +41,8 @@ def main(argv: list[str] | None = None) -> None:
     missing = [n for n in need if not (proc / n).exists()]
     if missing:
         print("not run; missing in data/processed: " + ", ".join(missing))
+        return
+    if not prereg.require_signed("the graph-model comparison"):
         return
     cfg = config.load("ml/graph")
     graph = load_graph()

@@ -35,9 +35,15 @@ WINDOW = 4  # impact quarter and the three after it
 
 
 def credit_growth(panel: pd.DataFrame, measure: str = "credit") -> pd.DataFrame:
-    """Wide (quarter_end x district_id) quarterly change in log amount; series breaks -> NaN."""
+    """Wide (quarter_end x district_id) quarterly change in log amount; series breaks -> NaN.
+
+    Rows run over every calendar quarter, so a quarter the panel lacks (from 2023 the RBI
+    publishes March only) is NaN and the change across it is NaN too, never an annual change
+    counted as a quarterly one."""
     p = panel[(panel.measure == measure) & (panel.bank_group == "all") & (panel.sector == "all")]
     amt = p.pivot_table(index="quarter_end", columns="district_id", values="amount_cr")
+    amt = amt.reindex(pd.date_range(amt.index.min(), amt.index.max(),
+                                    freq=pd.offsets.QuarterEnd(), name="quarter_end"))
     brk = p.pivot_table(index="quarter_end", columns="district_id", values="series_break",
                         aggfunc="max").reindex_like(amt).fillna(False).astype(bool)
     g = np.log(amt.where(amt > 0)).diff()

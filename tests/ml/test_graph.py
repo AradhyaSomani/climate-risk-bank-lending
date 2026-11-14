@@ -97,3 +97,29 @@ def test_credit_growth_masks_series_breaks():
     g = models.credit_growth(panel)[1]
     assert np.isnan(g.iloc[0]) and g.iloc[1] == pytest.approx(np.log(1.1))
     assert np.isnan(g.iloc[2])
+
+
+def test_credit_growth_never_spans_a_missing_quarter():
+    # from 2023 the panel has March only; the March-to-March change is not a quarterly one
+    q = pd.to_datetime(["2022-09-30", "2022-12-31", "2023-03-31", "2024-03-31", "2025-03-31"])
+    panel = pd.DataFrame({"district_id": 1, "quarter_end": q, "bank_group": "all",
+                          "measure": "credit", "sector": "all",
+                          "amount_cr": [100.0, 105.0, 110.0, 130.0, 150.0],
+                          "series_break": False})
+    g = models.credit_growth(panel)[1]
+    assert len(g) == 11 and g.index[-1] == pd.Timestamp("2025-03-31")
+    assert g.loc["2023-03-31"] == pytest.approx(np.log(110 / 105))
+    assert g.loc["2023-06-30":].isna().all()
+
+
+def test_run_waits_for_the_signed_preregistration(monkeypatch, tmp_path, capsys):
+    from cri import prereg
+    from cri.ml.graph import run
+
+    for n in ["panel_credit_deposit.parquet", "events.parquet", "event_district.parquet",
+              "district_graph.npz"]:
+        (tmp_path / n).touch()  # present but never read
+    monkeypatch.setattr(run.config, "path", lambda name: tmp_path)
+    monkeypatch.setattr(prereg, "is_signed", lambda: False)
+    run.main([])
+    assert "prereg-v1" in capsys.readouterr().out
