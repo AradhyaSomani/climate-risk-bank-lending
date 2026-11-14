@@ -21,8 +21,11 @@ disaster beyond a simple spatial lag. Feeds the spillover check in Phase 3F.
 - H2: two-layer GraphSAGE-mean network (plain PyTorch, dense row-standardised adjacency).
 - Metric: RMSE on each held-out event's treated districts in its window, leave-one-event-out,
   with every quarter of the held-out window removed from training. Gate: H2 below H1.
-- Result: **not run**. Needs `panel_credit_deposit.parquet` from B. The code is tested on a
-  simulated grid where shocks spill over (H1 beats H0 there, as it should).
+- Result (2026-11-14, after `prereg-v1`; `docs/eval_reports/graph_comparison.md`): **gate
+  failed** for credit and deposits. Mean RMSE over 11 held-out events, credit: training mean
+  0.0367, H0 0.0305, H1 0.0312, H2 0.0447; deposits: 0.0319, 0.0311, 0.0314, 0.0537. H2 is
+  above H1 on every event and above the training mean on average; H1 does not beat H0.
+  The code is also tested on a simulated grid where shocks spill over (H1 beats H0 there).
 - Every run also reports `naive_train_mean`, the RMSE of predicting the training mean, as
   the no-skill reference.
 
@@ -43,8 +46,10 @@ three times on two of them), RMSE as a share of the training-mean RMSE:
 
 The ridge models lose all their skill on the shuffled target, as they should. H2 does worse
 than the mean on both, because 300 epochs on a few hundred rows overfit; on the real panel
-that is something to watch, not a leak. The real-panel check runs with the gate once B's
-panel exists.
+that is something to watch, not a leak.
+
+On the real panel (credit, 2026-11-14) every model collapses: RMSE as a share of the
+training-mean RMSE is 1.02 (H0), 1.03 (H1) and 1.20 (H2).
 
 ## Spillover use (Phase 3F)
 `python -m cri.ml.graph.run --ring 1` scores the three models on the neighbours of treated
@@ -63,4 +68,9 @@ With only a handful of large events, H2 will be hard to separate from H1. The ab
 is the contribution, whichever way it comes out.
 
 ## Failure cases
-Not yet observed on real data.
+- H2 overfits on the real panel as on the simulated grid: worse than the training mean on
+  average for both measures, worst on Kosi deposits (0.115 against 0.057 for H0) and Kerala
+  deposits (0.090 against 0.038). It is a negative result and is not used in any estimate.
+- Deposit growth is barely forecastable at all after these events (H0 2.5% below the
+  training mean).
+- No test quarters for the 2023 cyclones: from 2023 the panel has March figures only.
