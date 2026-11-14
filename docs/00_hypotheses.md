@@ -200,7 +200,7 @@ whether any outcome had been seen, and is listed in the methods appendix (Phase 
 
 | Name | Role | Agreed on | Notes |
 | --- | --- | --- | --- |
-| Aradhya Somani | Data, ML and econometrics (sole owner from 2026-11-14) | | |
+| Aradhya Somani | Data, ML and econometrics (sole owner from 2026-11-14) | 2026-11-14 | No post-event credit or deposit figure seen. |
 
 To sign: fill in the date, confirm in Notes that no post-event credit or deposit figure has
 been seen, commit, and tag the commit `prereg-v1`.
