@@ -119,3 +119,27 @@
   bifurcation 2014, Kashmir 2016 and 2019, Manipur 2023). Nationwide shocks are left to the
   quarter fixed effects. Set before any outcome is looked at; dates to be checked against
   the orders and ECI reports.
+
+## 2026-11-14 Power check (Phase 0 E, B, by Aradhya)
+
+`python -m cri.events.power` (`docs/eval_reports/power_check.md`). No post-event outcome
+was used: pseudo impact quarters before each real one, and no district's quarters within
+12 quarters after any catalogue event that hit it.
+
+- Completeness: as drafted (every quarter -8 to +3, series-break quarters missing), Chennai,
+  Kerala and Fani have no district that qualifies. Chennai lacks quarters +3 to +5 and
+  Kerala -8 to -6 (RBI published nothing for September 2016 to March 2017), and Fani's
+  quarter -8 is the June 2017 series break. Proposed for signing: keep series-break quarters
+  as data and skip quarters RBI published for nobody. All seven events then qualify.
+- The pre-registered randomization inference (reassignment among the event's same-state
+  districts) is too optimistic for the Odisha cyclones: at pseudo dates with no effect it
+  rejects Phailin's and Fani's real treated sets in 21% to 57% of windows instead of 5%.
+  For Kosi, Bihar has only 3 districts outside the exclusion zone, so reassigned sets are
+  almost the real one. Two checks are reported next to it (reassignment among all
+  districts; the real set's own placebo-date error), and the largest of the three MDEs is
+  the one to plan with.
+- On the largest MDE and the proposed rule, four events pass on log credit (Kosi, Phailin,
+  Fani, Amphan); the gate needs four. Hudhud, Chennai and Kerala, with 3 or 4 treated
+  districts each, have MDEs of 12% to 13%. Pooled MDEs on log credit: floods 5.4%,
+  cyclones 5.8%; on log deposits: floods 5.1%, cyclones 7.7%. A 5% effect is at the edge
+  of what the design can see.

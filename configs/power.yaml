@@ -1,0 +1,35 @@
+# Phase 0 E power check (cri.events.power). Fixed before the pre-registration is signed;
+# the decision rule it feeds is docs/00_hypotheses.md section 6.
+measures: [credit, deposits]
+effects: [0.02, 0.05, 0.10]   # planted falls shown in the report (2, 5, 10 percent)
+alpha: 0.05                   # two-sided
+power: 0.80
+mde_pass: 0.10                # an event passes if its MDE is 10% or less
+min_passing_events: 4         # the Phase 0 gate
+k_controls: 5                 # matched controls per treated district, with replacement
+draws: 199                    # treatment reassignments per pseudo window (999 for the real test)
+pooled_draws: 4000            # pooled replicates per hazard type
+blocked_quarters: 12          # quarters after an event's impact kept out of every window
+min_treated: 3                # pre-registered event exclusion rules
+min_controls: 10
+grid_max: 0.30                # largest effect searched, log points
+seed: 20261114
+
+# Which quarters an event's districts must have over quarters -8 to +3. "drafted" is the
+# pre-registration as written; "proposed" is the change put forward for signing.
+rules:
+  drafted:
+    series_break_missing: true
+    skip_unpublished: false
+    text: >-
+      as drafted: a figure in every quarter, and series-break quarters (June 2017, March
+      2023) count as missing.
+  proposed:
+    series_break_missing: false
+    skip_unpublished: true
+    text: >-
+      series-break quarters are kept as data (decision log, 2026-11-11), and the quarters
+      RBI did not publish for any district (September 2016 to March 2017, and the non-March
+      quarters from June 2023) are skipped instead of failing every district. Any other
+      missing quarter still fails the district.
+power_rule: proposed          # rule used for the per-event pseudo windows
