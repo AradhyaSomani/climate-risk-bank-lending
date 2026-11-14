@@ -2,3 +2,8 @@
 high_tiers: [3, 4]            # "high" and "very high" (configs/hazard.yaml score.tier_cutoffs)
 top_n: [10, 50]               # concentration: share in the N most hazardous districts
 report_version: weighted      # score version for the reader table; all versions are kept
+# The six largest credit centres (docs/00_location_basis.md, B3): Brihan Mumbai (Mumbai and
+# Mumbai Suburban), Delhi (its nine districts), Chennai, Bangalore Urban, Kolkata and
+# Hyderabad. Credit is booked where it is sanctioned, so head-office lending sits here.
+metro_hq: [518, 519, 90, 91, 92, 93, 94, 95, 96, 97, 98, 603, 572, 342, 536]
+mumbai: [518, 519]            # Mumbai Suburban and Mumbai, named in the report
