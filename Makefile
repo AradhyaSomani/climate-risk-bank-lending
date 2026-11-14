@@ -2,7 +2,7 @@ PY ?= python
 DATABASE_URL ?= postgresql://postgres@localhost:5432/cri
 
 .PHONY: install install-pinned install-pinned-ml lock lint test contracts ci data hazard events \
-	stress all rebuild dvc-remote dvc-track db api api-sample checksums
+	stress all power rebuild dvc-remote dvc-track db api api-sample checksums
 
 install:
 	$(PY) -m pip install -e ".[geo,api,dev,report]"
@@ -52,6 +52,10 @@ stress: events
 	$(PY) -m cri.pipeline stress
 
 all: stress
+
+# Phase 0 E power check, blind to post-event outcomes (docs/eval_reports/power_check.md)
+power:
+	$(PY) -m cri.events.power
 
 # One command from raw data to the final tables on a clean checkout: the pinned environment,
 # the raw data from the DVC remote when one is set (otherwise what is already in data/raw,
