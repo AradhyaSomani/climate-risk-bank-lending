@@ -77,3 +77,20 @@ def test_states_share_of_india_high():
 def test_md_table():
     lines = md_table(pd.DataFrame({"a": [1], "b": ["x"]}))
     assert lines[0] == "| a | b |" and lines[1] == "| --- | --- |" and lines[2] == "| 1 | x |"
+
+
+def test_sector_shares():
+    from cri.exposure.report1 import sector_shares
+
+    rows = []
+    for sector, amt_hi, amt_lo in [("agriculture", 1.0, 3.0), ("services", 3.0, 1.0),
+                                   ("all", 4.0, 4.0)]:
+        for hz in ["flood", "cyclone", "combined"]:
+            tot = amt_hi + amt_lo
+            rows += [{"quarter_end": Q, "score_version": "weighted", "bank_group": "all",
+                      "sector": sector, "hazard_type": hz, "tier": t, "amount_cr": a,
+                      "share": a / tot} for t, a in [(4, amt_hi), (1, amt_lo)]]
+    t = sector_shares(pd.DataFrame(rows), Q, "weighted", [3, 4])
+    assert t.index.tolist() == ["agriculture", "services", "all"]
+    assert t.loc["agriculture", "flood"] == pytest.approx(0.25)
+    assert t.loc["services", "of_all"] == pytest.approx(0.5)

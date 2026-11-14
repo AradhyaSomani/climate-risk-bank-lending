@@ -93,6 +93,23 @@ def states(by_state: pd.DataFrame, quarter: pd.Timestamp, version: str, n: int
     return s.sort_values("high_amount", ascending=False).head(n)
 
 
+SECTOR_NAMES = {"agriculture": "Agriculture", "industry": "Industry", "services": "Services",
+                "personal": "Personal loans", "other": "Other", "all": "All credit"}
+
+
+def sector_shares(sec: pd.DataFrame, quarter: pd.Timestamp, version: str, high: list[int]
+                  ) -> pd.DataFrame:
+    """Per sector: its share of all credit, and the share of its credit in the high tiers
+    of each hazard (annual tables, place of utilisation)."""
+    s = sec[(sec.quarter_end == quarter) & (sec.score_version == version)
+            & (sec.bank_group == "all")]
+    hi = s[s.tier.isin(high)].groupby(["sector", "hazard_type"]).share.sum().unstack()
+    amt = s[s.hazard_type == "combined"].groupby("sector").amount_cr.sum()
+    out = hi.join((amt / amt.get("all", np.nan)).rename("of_all"))
+    order = [k for k in SECTOR_NAMES if k in out.index]
+    return out.loc[order]
+
+
 # ---------------------------------------------------------------------------- figures
 
 def _style(ax) -> None:
@@ -195,6 +212,41 @@ def md_table(df: pd.DataFrame) -> list[str]:
     return out
 
 
+def sector_bullet(sec: pd.DataFrame | None, version: str, high: list[int]) -> list[str]:
+    if sec is None:
+        return []
+    t = sector_shares(sec, sec.quarter_end.max(), version, high)
+    return [f"- **Farm credit is the least exposed to flood.** In the annual"
+            f" tables (credit where it is used), {pct(t.loc['agriculture', 'flood'])} of"
+            f" agricultural credit is in high flood tiers, against"
+            f" {pct(t.loc['all', 'flood'])} of all credit and"
+            f" {pct(t.loc['services', 'flood'])} of services (section 3)."]
+
+
+def sector_section(sec: pd.DataFrame | None, version: str, high: list[int]) -> list[str]:
+    if sec is None:
+        return []
+    q = sec.quarter_end.max()
+    t = sector_shares(sec, q, version, high)
+    lines = ["", "## 3. Sectors", "",
+             f"From RBI's annual tables of credit by district and occupation ({q:%B %Y})."
+             " They count credit where it is used, not where it is booked, so head-office"
+             " lending sits closer to the borrower than in the quarterly figures above."
+             " Services are transport operators, professional services, trade and finance.",
+             ""]
+    lines += md_table(pd.DataFrame({
+        "Sector": [SECTOR_NAMES[k] for k in t.index],
+        "Share of all credit": [pct(x) for x in t.of_all],
+        **{f"{hz.capitalize()}: share in high tiers": [pct(x) for x in t[hz]]
+           for hz in HAZARDS}}))
+    f = t.drop(index="all")["flood"]
+    lines += ["",
+              f"{SECTOR_NAMES[f.idxmin()]} credit is the least exposed to flood"
+              f" ({pct(f.min())} in the high tiers, against {pct(t.loc['all', 'flood'])} of all"
+              f" credit) and {SECTOR_NAMES[f.idxmax()].lower()} the most ({pct(f.max())})."]
+    return lines
+
+
 def write(root: Path | None = None) -> Path:
     import geopandas as gpd
 
@@ -210,6 +262,8 @@ def write(root: Path | None = None) -> Path:
     conc = pd.read_parquet(proc / "exposure_concentration.parquet")
     by_state = pd.read_parquet(proc / "exposure_by_state.parquet")
     trend = pd.read_parquet(proc / "exposure_trend.parquet")
+    sec_path = proc / "exposure_by_sector.parquet"
+    sec = pd.read_parquet(sec_path) if sec_path.exists() else None
     breaks = [pd.Timestamp(b["quarter_end"]) for b in config.load("panel")["series_breaks"]]
 
     first, last = tier.quarter_end.min(), tier.quarter_end.max()
@@ -272,6 +326,7 @@ def write(root: Path | None = None) -> Path:
         f" {pct(S.loc['cyclone', 'credit_ex_metro'])} against"
         f" {pct(S.loc['cyclone', 'population'])} (coastal districts from Gujarat round to West"
         " Bengal, including commercial ones such as Thane, Krishna and Visakhapatnam).",
+        *sector_bullet(sec, version, high),
         "- **Over twenty years the share has barely moved, but outside the metros it has"
         f" risen.** The combined share was {pct(S0.loc['combined', 'credit'])} in {fq};"
         " without the metros it rose from"
@@ -327,7 +382,8 @@ def write(root: Path | None = None) -> Path:
         "State": st.state,
         "Share of the state's credit in high tiers": [pct(x) for x in st.high_share],
         "Share of India's high-tier credit": [pct(x) for x in st.of_india_high]}))
-    L += ["", "## 3. Over time", "",
+    L += sector_section(sec, version, high)
+    L += ["", "## 4. Over time", "",
           f"![Share of credit in high and very high tiers, {fq} to {lq}]"
           f"({FIG_TREND.relative_to('docs')})", "",
           "*Figure 2. Share of credit in the high and very high tiers by hazard, with and"
@@ -356,7 +412,7 @@ def write(root: Path | None = None) -> Path:
           " metro centres the shares rise slowly instead (right panel of Figure 2): credit has"
           " grown faster in hazard-prone districts outside the centres than elsewhere outside"
           " them.",
-          "", "## 4. Concentration", "",
+          "", "## 5. Concentration", "",
           "Share of credit in the most hazardous districts (ranked by score), and the"
           " Herfindahl index of credit across all districts (0 = spread evenly, 1 = all in"
           " one).", ""]
@@ -374,7 +430,7 @@ def write(root: Path | None = None) -> Path:
           " big credit centres. Credit as a whole has become less concentrated: the Herfindahl"
           f" index fell from {c[c.quarter_end == first].hhi.iloc[0]:.3f} to"
           f" {c[c.quarter_end == last].hhi.iloc[0]:.3f}.",
-          "", "## 5. How much the answer depends on choices", "",
+          "", "## 6. How much the answer depends on choices", "",
           f"High-tier share of credit in {lq} under each hazard score version"
           " (Phase 2 F will add tier cut-offs, cyclone radius and the crosswalk flags):", ""]
     v = hs[(hs.quarter_end == last) & (hs.measure == "credit")] \
@@ -391,9 +447,10 @@ def write(root: Path | None = None) -> Path:
           " the other centres. In March 2007, 154 of 606 districts differed by more than"
           " 1.25 times between credit by sanction and by use (`docs/00_location_basis.md`). The"
           " 'without metros' columns are the closer guide to where lending is exposed.",
-          "- **Bank groups and sectors.** The quarterly series is all banks and all sectors."
-          " The split by sector (agriculture is the likely most flood-sensitive) needs the"
-          " annual BSR tables, and bank-group exposure needs the Phase 2 E routes.",
+          "- **Bank groups.** RBI's district tables have no split by bank group; bank-group"
+          " exposure needs the Phase 2 E routes. The sector split (section 3) is annual and"
+          " by place of utilisation, so it does not line up exactly with the quarterly"
+          " figures by place of sanction.",
           "- **Hazard is relative.** Tiers rank districts within India; they are not"
           " probabilities of loss.",
           "- **Effects.** This is where lending sits, not what happens to it after a flood or"
