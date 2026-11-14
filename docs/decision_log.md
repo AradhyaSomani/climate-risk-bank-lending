@@ -76,3 +76,33 @@
 - State loan waivers enter as flags by announcement quarter, with cooperative-only waivers
   kept apart. They are controls, set before any outcome is looked at; their dates still need
   checking against the state orders.
+
+## 2026-11-14 Sentinel-1 exports and the Kerala footprint (A)
+
+- The three exports ran on 13 November 2026 with the proposed windows and the descending
+  orbit (Kerala 22 scenes before and 5 after; Chennai 6 and 6). The ascending orbit had 5 and 4
+  for Kerala and none for Chennai. Task ids, files and sizes are in
+  `docs/data_cards/sentinel1.md`.
+- The slope mask now reads `COPERNICUS/DEM/GLO30_2024_1`. Earth Engine marked
+  `COPERNICUS/DEM/GLO30` deprecated while the exports ran, so these three files still used it.
+  They are not re-exported: the mask only removes slopes above 5 degrees, and a re-export
+  is one command if a later check needs it.
+- Chennai 2015, GFD against Sentinel-1: Spearman 0.12 and hit IoU 0.50 over the 14 districts
+  both maps cover, but 0.96 and 0.83 over the 7 districts the export covers for at least half
+  their area. The low figure comes from districts at the edge of the export box, which read
+  as unflooded. The validation report now gives both (`validation.s1_min_mapped_share: 0.5`).
+  Chennai keeps its GFD footprint (`flood.source_pre2019`), as decided on 2026-10-28.
+- Kerala's footprint is the Otsu map. With the catalogue rules set before any export (treated
+  above 5% flooded, exclusion zone from 1% and for neighbours of treated districts), it gives
+  3 treated districts, Alappuzha (12.2%), Thrissur (5.5%) and Kottayam (5.3%), and 8 in the
+  exclusion zone, among them the other four worst-hit districts of the Kerala PDNA:
+  Ernakulam (1.6%), Wayanad (1.5%), Pathanamthitta (just under 1%) and Idukki (0.5%); the
+  last two are in the zone as neighbours of treated districts.
+  No PDNA district falls into the control group.
+- The U-Net map of central Kerala finds more water in the same districts (Alappuzha 31%,
+  Kottayam 10%, Ernakulam 5.4%) and agrees with the Otsu map on ranking (Spearman 0.83 over
+  8 districts). Under the U-Net, Ernakulam would also be treated. The Otsu map probably
+  under-counts water under canopy and in built-up areas. **For the pre-registration:** keep
+  the Otsu footprint as the primary Kerala definition (it covers the whole state and the rule
+  was fixed first), and decide before signing whether a robustness run treats the PDNA
+  worst-hit districts instead. Only hazard maps were looked at; no credit or deposit figures.

@@ -145,25 +145,42 @@ def emdat_states(scores: pd.DataFrame, records: pd.DataFrame,
     return pd.DataFrame(rows)
 
 
-def gfd_vs_s1(flood: pd.DataFrame, cand: pd.DataFrame | None = None) -> pd.DataFrame:
+def gfd_vs_s1(flood: pd.DataFrame, cand: pd.DataFrame | None = None,
+              min_mapped: float | None = None) -> pd.DataFrame:
     """Each Sentinel-1 map against the GFD map of the same event, and the U-Net map against
     the Otsu map. Sentinel-1 rows carry the catalogue id (FL-2015-CHENNAI) and GFD rows the
-    GFD id (GFD-4309); the candidate list links the two."""
+    GFD id (GFD-4309); the candidate list links the two.
+
+    With `min_mapped`, each comparison is repeated over the districts whose Sentinel-1
+    `mapped_share` is at least that: a district the export covers only at its edge reads as
+    unflooded and drags the agreement down without saying anything about the map."""
     if cand is None:
         cand = pd.read_csv(config.REPO_ROOT / config.load("events")["candidates"], dtype=str)
     gfd_id = {r.event_id: f"GFD-{r.gfd_dfo_id}" for r in cand.itertuples()
               if isinstance(r.gfd_dfo_id, str)}
+    coverages = [("all", None)]
+    if min_mapped is not None and "mapped_share" in flood:
+        coverages.append((f"mapped >= {min_mapped:.0%}", min_mapped))
     rows = []
     s1 = flood[flood.source.isin(["s1_unet", "s1_otsu"])]
     for (ev, src), b in s1.groupby(["event_id", "source"]):
         refs = [("gfd", gfd_id.get(ev, ev))] + ([("s1_otsu", ev)] if src == "s1_unet" else [])
         for ref, key in refs:
             a = flood[(flood.event_id == key) & (flood.source == ref)]
-            if len(a):
-                r = compare_sources(a, b)
-                rows.append({"event_id": ev, "reference": ref, "s1_source": src, **{
-                    k: (len(v) if isinstance(v, list) else v) for k, v in r.items()}})
-    return pd.DataFrame(rows)
+            for label, m in coverages:
+                bb, aa = b, a
+                if m is not None:
+                    bb = b[b.mapped_share >= m]
+                    if ref.startswith("s1_"):
+                        aa = a[a.mapped_share >= m]
+                if len(aa) and len(bb):
+                    r = compare_sources(aa, bb)
+                    rows.append({"event_id": ev, "reference": ref, "s1_source": src,
+                                 "districts": label, **{
+                                     k: (len(v) if isinstance(v, list) else v)
+                                     for k, v in r.items()}})
+    out = pd.DataFrame(rows)
+    return out if len(coverages) > 1 else out.drop(columns="districts", errors="ignore")
 
 
 def _md(df: pd.DataFrame) -> str:
@@ -234,12 +251,16 @@ def run(out: Path = REPORT) -> Path:
                  "compare tiers with atlas zones in that state only.\n")
 
     parts.append("## 5. Global Flood Database against Sentinel-1\n")
-    cmp = gfd_vs_s1(inputs["flood"]) if inputs["flood"] is not None else pd.DataFrame()
+    cmp = (gfd_vs_s1(inputs["flood"], min_mapped=cfg.get("s1_min_mapped_share"))
+           if inputs["flood"] is not None else pd.DataFrame())
     if len(cmp):
         parts.append("Each Sentinel-1 map (`s1_source`) against a `reference` map of the same "
                      "event, over the districts both cover: Spearman correlation of flooded "
                      "share, overlap (IoU) of the districts each counts as hit, and the mean "
-                     "absolute difference in flooded share.\n")
+                     "absolute difference in flooded share. `districts` is either all the "
+                     "districts both maps cover, or only those the Sentinel-1 export covers "
+                     "for at least the given share of their area (`mapped_share`): a "
+                     "district at the edge of an export reads as unflooded.\n")
         parts.append(_md(cmp))
     else:
         parts.append("Pending: no Sentinel-1 extents yet (needs the Earth Engine export; "
@@ -255,7 +276,7 @@ def run(out: Path = REPORT) -> Path:
         parts.append(_md(state_tiers(scores_now, districts)))
     parts.append("")
     # summary goes right after the introduction
-    parts[2:2] = ["## Summary\n", *summarise(oos, em, spread), ""]
+    parts[2:2] = ["## Summary\n", *summarise(oos, em, spread, cmp), ""]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(parts))
     return out
@@ -286,7 +307,8 @@ def _span(x: pd.Series) -> str:
 
 
 def summarise(oos: pd.DataFrame, emdat: pd.DataFrame | None = None,
-              spread: dict[str, tuple[int, int]] | None = None) -> list[str]:
+              spread: dict[str, tuple[int, int]] | None = None,
+              s1: pd.DataFrame | None = None) -> list[str]:
     """Plain statements from the result tables, so the summary never drifts from them."""
     lines = []
     for hz in ["flood", "cyclone"]:
@@ -326,11 +348,31 @@ def summarise(oos: pd.DataFrame, emdat: pd.DataFrame | None = None,
             "reporting"
             + (f", and {many} of its {total} flood records name five or more states, so one "
                "monsoon season counts in states it barely touched" if many else "") + ".")
-        lines.append("- The NRSC atlas and the Sentinel-1 comparison are pending on data "
-                     "(sections 4 and 5).")
-    else:
-        lines.append("- EM-DAT, the NRSC atlas and the Sentinel-1 comparison are pending on "
-                     "data (sections 3 to 5).")
+    has_s1 = s1 is not None and len(s1) > 0
+    pending = [(name, sec) for name, sec, done in [
+        ("EM-DAT", 3, emdat is not None and len(emdat) > 0),
+        ("the NRSC atlas", 4, False),
+        ("the Sentinel-1 comparison", 5, has_s1)] if not done]
+    names, secs = [n for n, _ in pending], [s for _, s in pending]
+    what = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+    where = (f"section {secs[0]}" if len(secs) == 1 else
+             f"sections {secs[0]} and {secs[1]}" if len(secs) == 2 else
+             f"sections {secs[0]} to {secs[-1]}")
+    lines.append(f"- {what[0].upper() + what[1:]} {'is' if len(names) == 1 else 'are'} "
+                 f"pending on data ({where}).")
+    if has_s1:
+        parts = []
+        cols = ["event_id", "reference", "s1_source"]
+        for key, g in s1.groupby(cols, sort=False):
+            r = g.iloc[0]
+            txt = (f"{key[0]} {key[2]} against {key[1]}: Spearman {r.spearman:.2f}, hit IoU "
+                   f"{r.hit_iou:.2f} over {r.n_districts} districts")
+            if len(g) > 1:
+                w = g.iloc[1]
+                txt += (f" ({w.spearman:.2f} and {w.hit_iou:.2f} over the {w.n_districts} with "
+                        f"{w.districts.removeprefix('mapped ')} mapped)")
+            parts.append(txt)
+        lines.append("- Sentinel-1 (section 5): " + "; ".join(parts) + ".")
     lines.append("- Known artefact: `flood_duration_days` is high for some central Indian "
                  "districts hit by one long GFD event, probably reservoirs below the JRC "
                  "permanent-water threshold; it carries 5% of the weighted flood score.")

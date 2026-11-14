@@ -9,7 +9,7 @@ goes through cri.hazard.zonal_stats unchanged:
 2. Change detection: post-event minimum minus pre-event median below `diff_db`.
 3. Otsu threshold on the post-event VV histogram inside the area of interest.
 4. Water if both rules agree; JRC permanent water (occurrence >= 90) reported separately.
-5. Steep slopes (> 5 degrees, Copernicus DEM) are masked, as in the GFD algorithm.
+5. Steep slopes (> 5 degrees, Copernicus DEM GLO-30) are masked, as in the GFD algorithm.
 
 Dates, orbit and area come from the event's preset in `configs/hazard.yaml` (`sentinel1`);
 the area is the land of the event's states, cut to the preset's `bbox` if it has one.
@@ -42,6 +42,9 @@ from cri import config
 DEFAULTS = {"diff_db": -3.0, "slope_max_deg": 5.0, "scale_m": 30, "perm_occurrence": 90}
 # Value written where no scene covers a pixel; cri.hazard.flood_extent reads it as missing
 NODATA = {"otsu": 255, "backscatter": -9999}
+# Copernicus DEM for the slope mask. Earth Engine marks COPERNICUS/DEM/GLO30 as deprecated; the
+# 2024_1 release replaces it (same `DEM` band). The 2026-11-13 exports still used GLO30.
+DEM_ASSET = "COPERNICUS/DEM/GLO30_2024_1"
 _PROJECT: str | None = None
 
 
@@ -138,7 +141,7 @@ def flood_image(aoi, pre, post, orbit: str = "DESCENDING", **kw):
         ee.Reducer.histogram(255, 0.1), aoi, p["scale_m"] * 3, maxPixels=1e10, bestEffort=True
     ).get("VV")
     threshold = otsu(hist)
-    dem = ee.ImageCollection("COPERNICUS/DEM/GLO30").select("DEM")
+    dem = ee.ImageCollection(DEM_ASSET).select("DEM")
     # mosaic() drops the native projection; restore it so slope is computed at 30 m
     slope = ee.Terrain.slope(dem.mosaic().setDefaultProjection(dem.first().projection()))
     water = after.lt(ee.Number(threshold)).And(after.subtract(before).lt(p["diff_db"]))
@@ -150,7 +153,8 @@ def flood_image(aoi, pre, post, orbit: str = "DESCENDING", **kw):
         water.rename("flooded").toByte()
         .addBands(perm.rename("jrc_perm_water").toByte())
         .clip(aoi)
-        .set({"otsu_threshold_db": threshold, "pre": pre, "post": post, "orbit": orbit})
+        .set({"otsu_threshold_db": threshold, "pre": pre, "post": post, "orbit": orbit,
+              "dem": DEM_ASSET})
     )
 
 
