@@ -1,0 +1,4 @@
+# Phase 2 D lending exposure (cri.exposure.district_exposure).
+high_tiers: [3, 4]            # "high" and "very high" (configs/hazard.yaml score.tier_cutoffs)
+top_n: [10, 50]               # concentration: share in the N most hazardous districts
+report_version: weighted      # score version for the reader table; all versions are kept
