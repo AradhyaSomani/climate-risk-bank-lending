@@ -16,6 +16,7 @@ dependencies = [
   "numpy>=1.26",
   "openpyxl>=3.1",
   "xlrd>=2.0",
+  "python-calamine>=0.2",   # reads the 2014 annual BSR .xls that xlrd rejects
   "pandas>=2.1",
   "pyarrow>=14",
   "pyyaml>=6",

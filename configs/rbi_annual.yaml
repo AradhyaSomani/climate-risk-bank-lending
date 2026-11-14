@@ -1,0 +1,154 @@
+# Annual BSR district credit by occupation (Table 5.9 / 3.9), cri.ingest.rbi_annual.
+
+# Annual state names spelt as the quarterly statement spells them (the crosswalk's states)
+states:
+  A&N ISLANDS: ANDAMAN & NICOBAR ISLANDS
+  ANDAMAN & NICOBAR: ANDAMAN & NICOBAR ISLANDS
+  ANDAMAN AND NICOBAR ISLANDS: ANDAMAN & NICOBAR ISLANDS
+  CHATTISGARH: CHHATTISGARH
+  DADRA&NAGAR HAVELI: DADRA & NAGAR HAVELI
+  DELHI: NCT OF DELHI
+  ORISSA: ODISHA
+  PONDICHERRY: PUDUCHERRY
+  UTTARANCHAL: UTTARAKHAND
+  TAMILNADU: TAMIL NADU
+
+# District columns that RBI's table labels wrongly. `nth` counts the label's appearances in
+# the state's sheet, left to right and block by block, starting from 1.
+relabel:
+  - year: 2009
+    state: ANDAMAN & NICOBAR
+    district: NICOBAR
+    nth: 2
+    rename: SOUTH ANDAMAN
+    reason: >-
+      The March 2009 sheet heads its third column NICOBAR a second time; it is South Andaman
+      (Port Blair), the islands' largest credit district, which has no column of its own that
+      year and appears in every other year.
+
+# A district's occupations must add up to its total where the table gives one, within this
+# share of the total
+total_tolerance: 0.01
+
+# Years whose title row states the wrong unit. The 2005 and 2006 sheets say "Rupees Lakh",
+# but read in lakh their all-India total would be 115 and 151 lakh crore, against 8.8 in 2004
+# and 19.4 in 2007 (the other years state thousand); in thousand they fall on the trend
+# (11.5 and 15.1 lakh crore).
+unit_override:
+  2005: thousand
+  2006: thousand
+
+# District columns that repeat another district's figures exactly: unusable, left out.
+drop:
+  - year: 2006
+    state: HARYANA
+    districts: [KAITHAL, PANIPAT, KARNAL, REWARI, KURUKSHETRA, ROHTAK, MAHENDRAGARH, SIRSA,
+                MEWAT, SONIPAT, PANCHKULA, YAMUNANAGAR]
+    reason: >-
+      The March 2006 Haryana sheet repeats six districts' columns under six other names
+      (Panipat = Kaithal, Rewari = Karnal, Rohtak = Kurukshetra, Sirsa = Mahendragarh,
+      Sonipat = Mewat, Yamunanagar = Panchkula); which of each pair is right cannot be told.
+
+# All-India credit must not change by more than this factor from one year to the next (a
+# check on units)
+max_yearly_factor: 1.6
+
+# Labels merged before mapping (annual label -> label it is added to), per RBI state. In March
+# 2019 alone the table splits Delhi into its eleven revenue districts; every other year it has
+# one DELHI label, so 2019 is added back to that label to keep the years comparable.
+merge:
+  NCT OF DELHI:
+    CENTRAL DELHI: DELHI
+    EAST DELHI: DELHI
+    NEW DELHI: DELHI
+    NORTH DELHI: DELHI
+    NORTH-EAST DELHI: DELHI
+    NORTH-WEST DELHI: DELHI
+    SHAHDARA: DELHI
+    SOUTH DELHI: DELHI
+    SOUTH-EAST DELHI: DELHI
+    SOUTH-WEST DELHI: DELHI
+    WEST DELHI: DELHI
+
+# Additions to configs/crosswalk.yaml for labels only the annual tables use (same structure
+# and rules, keyed by Census 2011 state). Spelling slips, older names and districts created
+# after the quarterly crosswalk's labels were fixed.
+crosswalk:
+  names:
+    Andaman & Nicobar Island:
+      ANDAMAN: South Andaman          # to 2007; North & Middle Andaman shared until 2008
+    Andhra Pradesh:
+      VISHAKHAPATNAM: Visakhapatnam
+    Assam:
+      KAKROJHAR: Kokrajhar
+      KAMRUP METROPOLI: Kamrup Metropolitan
+    Bihar:
+      KAIMUL: Kaimur (bhabua)
+    Chhattisgarh:
+      JANSGIR CHAMPA: Janjgir-champa
+    Jammu & Kashmir:
+      BANDIPURA: Bandipore
+      GANGERBAL: Ganderbal
+      LADAKH: Leh (ladakh)            # 2002-2006; Kargil has its own column
+    Karnataka:
+      DAKSHIN KANNADA: Dakshina Kannada
+      UTTAR KANNADA: Uttara Kannada
+    Kerala:
+      CANNUR: Kannur
+    Maharashtra:
+      AHMEDNAGAR: Ahmadnagar
+      BHULE: Dhule
+      BRIHAN MUMBAI: Mumbai           # 2004-2007, Mumbai Suburban shared until 2008
+      GREATER MUMBAI: Mumbai          # 2002-2003
+      MUMBAI SURURBAN: Mumbai Suburban
+    Manipur:
+      IMPHAL: Imphal West             # to 2004, Imphal East shared until 2005
+    Odisha:
+      BOLANGIR: Balangir
+      NOWRANGPUR: Nabarangapur
+      PHULABANI: Kandhamal
+      SUNDERGARH: Sundargarh
+    Punjab:
+      NAWANSHAHAR: Shahid Bhagat Singh Nagar
+      NAWANSHAHR: Shahid Bhagat Singh Nagar
+      SAHIBZADA AJIT SINGH: Sahibzada Ajit Singh Nagar
+      SAHIBZADA AJIT SINGH NAGA: Sahibzada Ajit Singh Nagar
+    Rajasthan:
+      ALWA: Alwar
+    Tamil Nadu:
+      NILGIRI: The Nilgiris
+      PUDUKOTTAI: Pudukkottai
+    Uttar Pradesh:
+      KANPUR CITY: Kanpur Nagar
+      SIDDHARTHANAGAR: Siddharth Nagar
+    West Bengal:
+      COACH BIHAR: Koch Bihar
+      DARLING: Darjiling
+      MEDINIPUR: Pashchim Medinipur   # 2002 only, Purba Medinipur shared (below)
+  new_districts:
+    Andhra Pradesh:
+      YADADRI: {parent: Nalgonda}     # Yadadri Bhuvanagiri, 2016
+    Arunanchal Pradesh:
+      KAMLE: {parent: Lower Subansiri}          # 2017
+      KRA DAADI: {parent: Kurung Kumey}         # 2015
+      PAKKE KESSANG: {parent: East Kameng}      # 2018
+      SHI-YOMI: {parent: West Siang}            # 2018
+    Chhattisgarh:
+      KONDAGAON DW: {parent: Bastar}            # 2012
+    Goa:
+      KUSHAVATI: {parent: South Goa}            # 2025
+    Manipur:
+      PHERZAWAL: {parent: Churachandpur}        # 2016
+    Nagaland:
+      MELURI: {parent: Phek}                    # 2024
+      NIULAND: {parent: Dimapur}                # 2021
+      NOKLAK: {parent: Tuensang}                # 2017
+      SHAMATOR: {parent: Tuensang}              # 2021
+      TSEMINYU: {parent: Kohima}                # 2021
+    Uttar Pradesh:
+      CHHATRAPATI SHAHUJI MAHARAJ NAGAR: {parent: Sultanpur}  # Amethi, 2010
+  pre_2011_children:
+    West Bengal:
+      Purba Medinipur: {parent: Pashchim Medinipur}   # Medinipur split in 2002
+  state_wide_labels:
+    NCT of Delhi: [DELHI]
