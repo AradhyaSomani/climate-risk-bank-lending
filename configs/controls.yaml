@@ -49,6 +49,18 @@ products:
 # Anomalies: a quarter's rainfall over the mean of the same calendar quarter in these years
 rain_normal: [1991, 2020]
 
+# Parts of a Census 2011 state, for waivers, elections and shocks that cover only part of it.
+# Census 2011 district codes (district_master.parquet). Telangana (formed 2 June 2014) is the
+# ten Census 2011 districts from Adilabad to Khammam; the rest of Andhra Pradesh is the
+# residual state.
+regions:
+  telangana:
+    state: Andhra Pradesh
+    district_ids: [532, 533, 534, 535, 536, 537, 538, 539, 540, 541]
+  andhra_pradesh_2014:
+    state: Andhra Pradesh
+    district_ids: [542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554]
+
 # State farm loan waivers (they can move district credit on their own, Phase 1 D). Census
 # 2011 states. `announced` is the date the waiver was announced or ordered; `scope` says
 # which lenders it covered, because a waiver of cooperative-bank loans only barely touches
@@ -60,8 +72,8 @@ rain_normal: [1991, 2020]
 # press; `checked: false` means the date is still to be checked against the order itself.
 loan_waivers:
   - {state: ALL, announced: 2008-02-29, scheme: Agricultural Debt Waiver and Debt Relief Scheme, scope: all lenders, amount_cr: 71680, checked: false}
-  - {state: Andhra Pradesh, announced: 2014-08-14, scheme: Rythu Runa Mafi (Andhra Pradesh), scope: all lenders, amount_cr: 24000, checked: false}
-  - {state: Andhra Pradesh, announced: 2014-08-14, scheme: Rythu Runa Mafi (Telangana), scope: all lenders, amount_cr: 17000, checked: false}
+  - {region: andhra_pradesh_2014, announced: 2014-08-14, scheme: Rythu Runa Mafi (Andhra Pradesh), scope: all lenders, amount_cr: 24000, checked: false}
+  - {region: telangana, announced: 2014-08-14, scheme: Rythu Runa Mafi (Telangana), scope: all lenders, amount_cr: 17000, checked: false}
   - {state: Tamil Nadu, announced: 2016-05-23, scheme: Crop loan waiver for small and marginal farmers, scope: cooperative banks only, amount_cr: 5780, checked: false}
   - {state: Uttar Pradesh, announced: 2017-04-04, scheme: Fasal Rin Mochan Yojana, scope: all lenders, amount_cr: 36359, checked: false}
   - {state: Maharashtra, announced: 2017-06-24, scheme: Chhatrapati Shivaji Maharaj Shetkari Sanman Yojana, scope: all lenders, amount_cr: 34022, checked: false}
@@ -76,3 +88,165 @@ loan_waivers:
   - {state: Maharashtra, announced: 2019-12-21, scheme: Mahatma Jyotirao Phule Shetkari Karjmukti Yojana, scope: all lenders, amount_cr: 20000, checked: false}
   - {state: Jharkhand, announced: 2020-03-03, scheme: Krishi Rin Mafi Yojana, scope: all lenders, amount_cr: 2000, checked: false}
   - {state: Tamil Nadu, announced: 2021-02-05, scheme: Crop loan waiver, scope: cooperative banks only, amount_cr: 12110, checked: false}
+
+# Elections (Phase 1 D). Agricultural credit from public-sector banks rises in the year
+# before a state election (Cole 2009, AEJ: Applied 1(1)), so the quarter of each result and
+# the quarters until the next one are controls. `results` is the day the Election Commission
+# of India declared the results (counting day); state names are the Census 2011 spellings in
+# the district master. States without an assembly (Andaman and Nicobar, Chandigarh, Dadra
+# and Nagar Haveli, Daman and Diu, Lakshadweep) have none. Elections whose results came
+# before 2004 are left out: only the next result matters for the window. `checked: false`
+# means the date is from the ECI results pages as reported in the press and still to be
+# checked against the ECI statistical report for that election.
+general_elections: [2004-05-13, 2009-05-16, 2014-05-16, 2019-05-23, 2024-06-04]
+
+state_elections:
+  - {state: Andhra Pradesh, results: 2004-05-11, checked: false}
+  - {state: Andhra Pradesh, results: 2009-05-16, checked: false}
+  - {state: Andhra Pradesh, results: 2014-05-16, checked: false}  # both successor states
+  - {region: telangana, results: 2018-12-11, checked: false}
+  - {region: andhra_pradesh_2014, results: 2019-05-23, checked: false}
+  - {region: telangana, results: 2023-12-03, checked: false}
+  - {region: andhra_pradesh_2014, results: 2024-06-04, checked: false}
+  - {state: Arunanchal Pradesh, results: 2004-10-11, checked: false}
+  - {state: Arunanchal Pradesh, results: 2009-10-22, checked: false}
+  - {state: Arunanchal Pradesh, results: 2014-05-16, checked: false}
+  - {state: Arunanchal Pradesh, results: 2019-05-23, checked: false}
+  - {state: Arunanchal Pradesh, results: 2024-06-02, checked: false}
+  - {state: Assam, results: 2006-05-11, checked: false}
+  - {state: Assam, results: 2011-05-13, checked: false}
+  - {state: Assam, results: 2016-05-19, checked: false}
+  - {state: Assam, results: 2021-05-02, checked: false}
+  - {state: Assam, results: 2026-05-04, checked: false}
+  - {state: Bihar, results: 2005-02-27, checked: false}  # hung assembly, dissolved
+  - {state: Bihar, results: 2005-11-22, checked: false}
+  - {state: Bihar, results: 2010-11-24, checked: false}
+  - {state: Bihar, results: 2015-11-08, checked: false}
+  - {state: Bihar, results: 2020-11-10, checked: false}
+  - {state: Bihar, results: 2025-11-14, checked: false}
+  - {state: Chhattisgarh, results: 2008-12-08, checked: false}
+  - {state: Chhattisgarh, results: 2013-12-08, checked: false}
+  - {state: Chhattisgarh, results: 2018-12-11, checked: false}
+  - {state: Chhattisgarh, results: 2023-12-03, checked: false}
+  - {state: Goa, results: 2007-06-04, checked: false}
+  - {state: Goa, results: 2012-03-06, checked: false}
+  - {state: Goa, results: 2017-03-11, checked: false}
+  - {state: Goa, results: 2022-03-10, checked: false}
+  - {state: Gujarat, results: 2007-12-23, checked: false}
+  - {state: Gujarat, results: 2012-12-20, checked: false}
+  - {state: Gujarat, results: 2017-12-18, checked: false}
+  - {state: Gujarat, results: 2022-12-08, checked: false}
+  - {state: Haryana, results: 2005-02-27, checked: false}
+  - {state: Haryana, results: 2009-10-22, checked: false}
+  - {state: Haryana, results: 2014-10-19, checked: false}
+  - {state: Haryana, results: 2019-10-24, checked: false}
+  - {state: Haryana, results: 2024-10-08, checked: false}
+  - {state: Himachal Pradesh, results: 2007-12-28, checked: false}
+  - {state: Himachal Pradesh, results: 2012-12-20, checked: false}
+  - {state: Himachal Pradesh, results: 2017-12-18, checked: false}
+  - {state: Himachal Pradesh, results: 2022-12-08, checked: false}
+  - {state: Jammu & Kashmir, results: 2008-12-28, checked: false}
+  - {state: Jammu & Kashmir, results: 2014-12-23, checked: false}
+  - {state: Jammu & Kashmir, results: 2024-10-08, checked: false}  # Union Territory from 2019; Ladakh has no assembly
+  - {state: Jharkhand, results: 2005-02-27, checked: false}
+  - {state: Jharkhand, results: 2009-12-23, checked: false}
+  - {state: Jharkhand, results: 2014-12-23, checked: false}
+  - {state: Jharkhand, results: 2019-12-23, checked: false}
+  - {state: Jharkhand, results: 2024-11-23, checked: false}
+  - {state: Karnataka, results: 2004-05-13, checked: false}
+  - {state: Karnataka, results: 2008-05-25, checked: false}
+  - {state: Karnataka, results: 2013-05-08, checked: false}
+  - {state: Karnataka, results: 2018-05-15, checked: false}
+  - {state: Karnataka, results: 2023-05-13, checked: false}
+  - {state: Kerala, results: 2006-05-11, checked: false}
+  - {state: Kerala, results: 2011-05-13, checked: false}
+  - {state: Kerala, results: 2016-05-19, checked: false}
+  - {state: Kerala, results: 2021-05-02, checked: false}
+  - {state: Kerala, results: 2026-05-04, checked: false}
+  - {state: Madhya Pradesh, results: 2008-12-08, checked: false}
+  - {state: Madhya Pradesh, results: 2013-12-08, checked: false}
+  - {state: Madhya Pradesh, results: 2018-12-11, checked: false}
+  - {state: Madhya Pradesh, results: 2023-12-03, checked: false}
+  - {state: Maharashtra, results: 2004-10-16, checked: false}
+  - {state: Maharashtra, results: 2009-10-22, checked: false}
+  - {state: Maharashtra, results: 2014-10-19, checked: false}
+  - {state: Maharashtra, results: 2019-10-24, checked: false}
+  - {state: Maharashtra, results: 2024-11-23, checked: false}
+  - {state: Manipur, results: 2007-02-27, checked: false}
+  - {state: Manipur, results: 2012-03-06, checked: false}
+  - {state: Manipur, results: 2017-03-11, checked: false}
+  - {state: Manipur, results: 2022-03-10, checked: false}
+  - {state: Meghalaya, results: 2008-03-07, checked: false}
+  - {state: Meghalaya, results: 2013-02-28, checked: false}
+  - {state: Meghalaya, results: 2018-03-03, checked: false}
+  - {state: Meghalaya, results: 2023-03-02, checked: false}
+  - {state: Mizoram, results: 2008-12-08, checked: false}
+  - {state: Mizoram, results: 2013-12-09, checked: false}
+  - {state: Mizoram, results: 2018-12-11, checked: false}
+  - {state: Mizoram, results: 2023-12-04, checked: false}
+  - {state: NCT of Delhi, results: 2008-12-08, checked: false}
+  - {state: NCT of Delhi, results: 2013-12-08, checked: false}
+  - {state: NCT of Delhi, results: 2015-02-10, checked: false}
+  - {state: NCT of Delhi, results: 2020-02-11, checked: false}
+  - {state: NCT of Delhi, results: 2025-02-08, checked: false}
+  - {state: Nagaland, results: 2008-03-07, checked: false}
+  - {state: Nagaland, results: 2013-02-28, checked: false}
+  - {state: Nagaland, results: 2018-03-03, checked: false}
+  - {state: Nagaland, results: 2023-03-02, checked: false}
+  - {state: Odisha, results: 2004-05-13, checked: false}
+  - {state: Odisha, results: 2009-05-16, checked: false}
+  - {state: Odisha, results: 2014-05-16, checked: false}
+  - {state: Odisha, results: 2019-05-23, checked: false}
+  - {state: Odisha, results: 2024-06-04, checked: false}
+  - {state: Puducherry, results: 2006-05-11, checked: false}
+  - {state: Puducherry, results: 2011-05-13, checked: false}
+  - {state: Puducherry, results: 2016-05-19, checked: false}
+  - {state: Puducherry, results: 2021-05-02, checked: false}
+  - {state: Puducherry, results: 2026-05-04, checked: false}
+  - {state: Punjab, results: 2007-02-27, checked: false}
+  - {state: Punjab, results: 2012-03-06, checked: false}
+  - {state: Punjab, results: 2017-03-11, checked: false}
+  - {state: Punjab, results: 2022-03-10, checked: false}
+  - {state: Rajasthan, results: 2008-12-08, checked: false}
+  - {state: Rajasthan, results: 2013-12-08, checked: false}
+  - {state: Rajasthan, results: 2018-12-11, checked: false}
+  - {state: Rajasthan, results: 2023-12-03, checked: false}
+  - {state: Sikkim, results: 2004-05-13, checked: false}
+  - {state: Sikkim, results: 2009-05-16, checked: false}
+  - {state: Sikkim, results: 2014-05-16, checked: false}
+  - {state: Sikkim, results: 2019-05-23, checked: false}
+  - {state: Sikkim, results: 2024-06-02, checked: false}
+  - {state: Tamil Nadu, results: 2006-05-11, checked: false}
+  - {state: Tamil Nadu, results: 2011-05-13, checked: false}
+  - {state: Tamil Nadu, results: 2016-05-19, checked: false}
+  - {state: Tamil Nadu, results: 2021-05-02, checked: false}
+  - {state: Tamil Nadu, results: 2026-05-04, checked: false}
+  - {state: Tripura, results: 2008-03-07, checked: false}
+  - {state: Tripura, results: 2013-02-28, checked: false}
+  - {state: Tripura, results: 2018-03-03, checked: false}
+  - {state: Tripura, results: 2023-03-02, checked: false}
+  - {state: Uttar Pradesh, results: 2007-05-11, checked: false}
+  - {state: Uttar Pradesh, results: 2012-03-06, checked: false}
+  - {state: Uttar Pradesh, results: 2017-03-11, checked: false}
+  - {state: Uttar Pradesh, results: 2022-03-10, checked: false}
+  - {state: Uttarakhand, results: 2007-02-27, checked: false}
+  - {state: Uttarakhand, results: 2012-03-06, checked: false}
+  - {state: Uttarakhand, results: 2017-03-11, checked: false}
+  - {state: Uttarakhand, results: 2022-03-10, checked: false}
+  - {state: West Bengal, results: 2006-05-11, checked: false}
+  - {state: West Bengal, results: 2011-05-13, checked: false}
+  - {state: West Bengal, results: 2016-05-19, checked: false}
+  - {state: West Bengal, results: 2021-05-02, checked: false}
+  - {state: West Bengal, results: 2026-05-04, checked: false}
+
+# Large state policy shocks that can move district credit on their own (Phase 1 D). A flag
+# in the quarter each began. Nationwide shocks (demonetisation, November 2016; GST, July
+# 2017; the COVID-19 lockdown, March 2020; the RBI loan moratorium, March to August 2020)
+# hit every district at once, so the quarter fixed effects absorb them and they are not
+# listed here.
+state_shocks:
+  - {state: Andhra Pradesh, date: 2010-10-15, name: Andhra Pradesh microfinance ordinance, source: "Andhra Pradesh Micro Finance Institutions (Regulation of Money Lending) Ordinance, 2010; RBI Malegam Committee report (January 2011)", checked: false}
+  - {state: Andhra Pradesh, date: 2014-06-02, name: Andhra Pradesh bifurcation, source: "Andhra Pradesh Reorganisation Act, 2014 (appointed day 2 June 2014)", checked: false}
+  - {state: Jammu & Kashmir, date: 2016-07-08, name: Kashmir unrest and curfews, source: "Press reports of the curfews from July 2016", checked: false}
+  - {state: Jammu & Kashmir, date: 2019-08-05, name: Article 370 revoked and communications shutdown, source: "Constitution (Application to Jammu and Kashmir) Order, 2019; Jammu and Kashmir Reorganisation Act, 2019", checked: false}
+  - {state: Manipur, date: 2023-05-03, name: Manipur ethnic violence, source: "Press reports from 3 May 2023; internet shutdown orders of the Manipur government", checked: false}

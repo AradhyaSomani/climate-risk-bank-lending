@@ -13,6 +13,14 @@ study period in configs/project.yaml:
 - State farm loan waivers: whether one covering commercial-bank loans was announced in the
   quarter in the district's state, one covering cooperative banks only, and the quarters
   since the latest one covering commercial banks.
+- Elections: state assembly and Lok Sabha results declared in the quarter, and the quarters
+  until the district's next assembly results (credit to farmers rises before elections,
+  Cole 2009).
+- Large state policy shocks (the Andhra Pradesh microfinance ordinance, the state's
+  bifurcation, and others in configs/controls.yaml): a flag in the quarter one began.
+
+Waivers, elections and shocks name a Census 2011 state, or a `region` (a list of districts)
+for part of one: Telangana's elections and waiver cover its ten districts only.
 
 Rainfall and night lights come from the Earth Engine tables in data/raw/controls/
 (cri.ingest.ee_controls). When they are not there yet the columns stay empty and the rest is
@@ -114,36 +122,109 @@ def census_controls(census: pd.DataFrame, master: pd.DataFrame) -> pd.DataFrame:
     return m.merge(c, on="district_id", how="left", validate="one_to_one")
 
 
-def waiver_flags(waivers: list[dict], master: pd.DataFrame,
-                 quarters: list[pd.Timestamp]) -> pd.DataFrame:
+def _grid(master: pd.DataFrame, quarters: list[pd.Timestamp]) -> pd.DataFrame:
+    return pd.MultiIndex.from_product([sorted(master.district_id), quarters],
+                                      names=["district_id", "quarter_end"]).to_frame(index=False)
+
+
+def event_districts(entries: list[dict], master: pd.DataFrame, date_key: str,
+                    regions: dict | None = None) -> pd.DataFrame:
+    """One row per entry and district it covers: entry (its position), district_id and the
+    quarter_end of `entry[date_key]`. An entry names a Census 2011 `state` ("ALL" for every
+    district) or a `region` from configs/controls.yaml `regions` (a list of districts, for
+    a part of a Census 2011 state such as Telangana)."""
+    regions = regions or {}
+    states = set(master.state)
+    ids_by_state = master.groupby("state").district_id.apply(list).to_dict()
+    known = set(master.district_id)
+    rows = []
+    for i, e in enumerate(entries):
+        if e.get("region"):
+            if e["region"] not in regions:
+                raise ValueError(f"unknown region {e['region']!r}")
+            ids = list(regions[e["region"]]["district_ids"])
+            missing = set(ids) - known
+            if missing:
+                raise ValueError(f"region {e['region']}: districts {sorted(missing)} not in "
+                                 "the district master")
+            region_state = regions[e["region"]].get("state")
+            if region_state and set(ids) - set(ids_by_state.get(region_state, [])):
+                raise ValueError(f"region {e['region']}: districts outside {region_state}")
+        elif e["state"] == "ALL":
+            ids = sorted(known)
+        elif e["state"] in states:
+            ids = ids_by_state[e["state"]]
+        else:
+            raise ValueError(f"unknown Census 2011 state {e['state']!r}")
+        q = pd.Period(pd.Timestamp(e[date_key]), "Q").end_time.normalize()
+        rows += [(i, d, q) for d in ids]
+    return pd.DataFrame(rows, columns=["entry", "district_id", "quarter_end"]).astype(
+        {"entry": int, "district_id": int, "quarter_end": "datetime64[ns]"})
+
+
+def _flag(grid: pd.DataFrame, ev: pd.DataFrame, name: str) -> pd.DataFrame:
+    hit = ev[["district_id", "quarter_end"]].drop_duplicates().assign(**{name: True})
+    out = grid.merge(hit, on=["district_id", "quarter_end"], how="left")
+    out[name] = out[name].astype("boolean").fillna(False).astype(bool)
+    return out
+
+
+def _qidx(ts: pd.Series) -> pd.Series:
+    return ts.dt.year * 4 + ts.dt.quarter
+
+
+def waiver_flags(waivers: list[dict], master: pd.DataFrame, quarters: list[pd.Timestamp],
+                 regions: dict | None = None) -> pd.DataFrame:
     """Per district and quarter: commercial-bank waiver announced, cooperative-only waiver
     announced, and quarters since the latest commercial-bank waiver (null before any)."""
-    states = sorted(master.state.unique())
-    rows = []
-    for w in waivers:
-        targets = states if w["state"] == "ALL" else [w["state"]]
-        unknown = set(targets) - set(states)
-        if unknown:
-            raise ValueError(f"loan_waivers: unknown Census 2011 state {sorted(unknown)}")
-        q = pd.Period(pd.Timestamp(w["announced"]), "Q").end_time.normalize()
-        coop = "cooperative" in str(w["scope"]).lower()
-        rows += [{"state": s, "quarter_end": q, "coop": coop} for s in targets]
-    ev = pd.DataFrame(rows, columns=["state", "quarter_end", "coop"]).astype(
-        {"state": object, "quarter_end": "datetime64[ns]", "coop": bool})
-    grid = pd.MultiIndex.from_product([states, quarters], names=["state", "quarter_end"]) \
-        .to_frame(index=False)
-    comm = ev[~ev.coop].drop_duplicates(["state", "quarter_end"]).assign(waiver_commercial=True)
-    coop = ev[ev.coop].drop_duplicates(["state", "quarter_end"]).assign(waiver_coop_only=True)
-    grid = grid.merge(comm[["state", "quarter_end", "waiver_commercial"]], how="left") \
-        .merge(coop[["state", "quarter_end", "waiver_coop_only"]], how="left")
-    grid[["waiver_commercial", "waiver_coop_only"]] = grid[
-        ["waiver_commercial", "waiver_coop_only"]].fillna(False).astype(bool)
-    grid = grid.sort_values(["state", "quarter_end"])
-    qidx = grid.quarter_end.dt.year * 4 + grid.quarter_end.dt.quarter
-    last = qidx.where(grid.waiver_commercial).groupby(grid.state).ffill()
-    grid["quarters_since_waiver"] = (qidx - last).astype("Int64")
-    out = master[["district_id", "state"]].merge(grid, on="state")
-    return out.drop(columns="state")
+    ev = event_districts(waivers, master, "announced", regions)
+    coop = pd.Series([("cooperative" in str(w.get("scope", "")).lower()) for w in waivers],
+                     dtype=bool)
+    is_coop = ev.entry.map(coop).astype(bool) if len(ev) else pd.Series([], dtype=bool)
+    grid = _flag(_grid(master, quarters), ev[~is_coop], "waiver_commercial")
+    grid = _flag(grid, ev[is_coop], "waiver_coop_only")
+    grid = grid.sort_values(["district_id", "quarter_end"])
+    q = _qidx(grid.quarter_end)
+    last = q.where(grid.waiver_commercial).groupby(grid.district_id).ffill()
+    grid["quarters_since_waiver"] = (q - last).astype("Int64")
+    return grid
+
+
+def election_flags(assembly: list[dict], general: list[str], master: pd.DataFrame,
+                   quarters: list[pd.Timestamp], regions: dict | None = None) -> pd.DataFrame:
+    """Per district and quarter: state assembly election results declared in the quarter,
+    Lok Sabha results declared in the quarter, and quarters until the next assembly results
+    (0 in the results quarter; null when no later election is listed, and always null in
+    union territories without an assembly)."""
+    ev = event_districts(assembly, master, "results", regions)
+    gen = event_districts([{"state": "ALL", "results": d} for d in general], master,
+                          "results")
+    grid = _flag(_grid(master, quarters), ev, "election_state")
+    grid = _flag(grid, gen, "election_general")
+    grid = grid.sort_values(["district_id", "quarter_end"])
+    # the next results quarter may fall after the study window, so look it up in the
+    # event list rather than in the grid
+    nxt = ev[["district_id", "quarter_end"]].drop_duplicates().sort_values("quarter_end")
+    nxt = nxt.rename(columns={"quarter_end": "next_results"})
+    grid = pd.merge_asof(grid.sort_values("quarter_end"), nxt, by="district_id",
+                         left_on="quarter_end", right_on="next_results",
+                         direction="forward")
+    grid["quarters_to_state_election"] = (
+        _qidx(grid.next_results) - _qidx(grid.quarter_end)).astype("Int64")
+    return grid.drop(columns="next_results").sort_values(["district_id", "quarter_end"])
+
+
+def shock_flags(shocks: list[dict], master: pd.DataFrame, quarters: list[pd.Timestamp],
+                regions: dict | None = None) -> pd.DataFrame:
+    """Per district and quarter: a large state policy shock began in the quarter, and its
+    name (names joined by '; ' when two fall in one quarter)."""
+    ev = event_districts(shocks, master, "date", regions)
+    names = pd.Series([s["name"] for s in shocks], dtype=object)
+    ev = ev.assign(name=ev.entry.map(names))
+    grid = _flag(_grid(master, quarters), ev, "state_shock")
+    nm = ev.groupby(["district_id", "quarter_end"]).name.agg("; ".join) \
+        .rename("state_shock_name").reset_index()
+    return grid.merge(nm, on=["district_id", "quarter_end"], how="left")
 
 
 def build_controls(master: pd.DataFrame, census: pd.DataFrame, raw_dir: Path, cfg: dict,
@@ -159,8 +240,15 @@ def build_controls(master: pd.DataFrame, census: pd.DataFrame, raw_dir: Path, cf
     out = out.merge(ntl, on=["district_id", "quarter_end"], how="left")
     out["year"] = out.quarter_end.dt.year
     out = out.merge(harm, on=["district_id", "year"], how="left").drop(columns="year")
-    out = out.merge(waiver_flags(cfg.get("loan_waivers", []), master, quarters),
-                    on=["district_id", "quarter_end"], how="left")
+    regions = cfg.get("regions", {})
+    keys = ["district_id", "quarter_end"]
+    out = out.merge(waiver_flags(cfg.get("loan_waivers", []), master, quarters, regions),
+                    on=keys, how="left")
+    out = out.merge(election_flags(cfg.get("state_elections", []),
+                                   cfg.get("general_elections", []), master, quarters,
+                                   regions), on=keys, how="left")
+    out = out.merge(shock_flags(cfg.get("state_shocks", []), master, quarters, regions),
+                    on=keys, how="left")
     for c in ["rain_mm", "rain_anom", "ntl_viirs", "ntl_harmonized"]:
         out[c] = pd.to_numeric(out[c], errors="coerce").astype(float)
     out["data_version"] = data_version

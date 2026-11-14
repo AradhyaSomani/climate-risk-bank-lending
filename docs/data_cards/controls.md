@@ -1,4 +1,4 @@
-# Controls: rainfall, night lights, Census 2011 and state loan waivers (Phase 1 D)
+# Controls: rainfall, night lights, Census 2011, loan waivers, elections and state shocks (Phase 1 D)
 
 Built by `cri.exposure.controls` into `data/processed/controls_district_quarter.parquet`:
 one row per Census 2011 district and calendar quarter, March 2004 to the end of the study
@@ -12,7 +12,10 @@ period. Settings are in `configs/controls.yaml`.
 | `rain_mm`, `rain_anom` | CHIRPS v2.0 daily (Earth Engine `UCSB-CHG/CHIRPS/DAILY`) | Monthly totals averaged over the district, summed to quarters (all three months needed). Anomaly = quarter / mean of the same calendar quarter 1991-2020 - 1 |
 | `ntl_viirs` | VIIRS DNB monthly, stray-light corrected (`NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG`) | District mean of `avg_rad` (nW/cm²/sr), averaged over the quarter's months with data, small negative monthly means (background noise on dark land) set to 0; from January 2014, the first month Earth Engine holds |
 | `ntl_harmonized` | Harmonised DMSP and VIIRS annual night lights (Li, Zhou, Zhao and Zhao 2020, *Scientific Data* 7:168), Earth Engine community catalogue `projects/sat-io/open-datasets/Harmonized_NTL/{dmsp,viirs}` | DMSP scale (0-63), annual, same value for the four quarters of a year. The bridge across the 2013-14 change of satellite: the authors' harmonisation, not ours. Both parts hold 2013; 2013 is taken from the DMSP part |
-| `waiver_commercial`, `waiver_coop_only`, `quarters_since_waiver` | `loan_waivers` in `configs/controls.yaml` | State-level, copied to every district of the state |
+| `waiver_commercial`, `waiver_coop_only`, `quarters_since_waiver` | `loan_waivers` in `configs/controls.yaml` | State-level, copied to every district of the state (or of a `region`, below) |
+| `election_state`, `election_general` | `state_elections`, `general_elections` in `configs/controls.yaml` | Assembly or Lok Sabha results declared in the quarter |
+| `quarters_to_state_election` | `state_elections` | Quarters until the next assembly results (0 in the results quarter). Null after a state's last listed election and in union territories without an assembly |
+| `state_shock`, `state_shock_name` | `state_shocks` in `configs/controls.yaml` | A large state policy shock began in the quarter, and its name |
 
 ## How the Earth Engine tables are made
 
@@ -78,6 +81,36 @@ Research's Special Report on Agriculture (18 July 2022); exact dates are from pr
 of the state orders and are marked `checked: false` until each is checked against the order.
 Telangana's 2014 waiver is under Andhra Pradesh, its Census 2011 state.
 
+## Elections
+
+137 assembly results from 2004 to May 2026 for the 30 Census 2011 states and union
+territories with an assembly, and the five Lok Sabha results (2004, 2009, 2014, 2019, 2024).
+The date is the counting day, when the Election Commission declared the results; the
+quarter of the poll itself is the same or the one before. Credit to farmers from
+public-sector banks rises in the year before a state election (Cole 2009, *American
+Economic Journal: Applied Economics* 1(1)), which is why the distance to the next election
+is kept as well as the results quarter. Bihar voted twice in 2005 (a hung assembly in
+February, then November). Every date is marked `checked: false` until checked against the
+ECI statistical report for that election.
+
+## Regions: Telangana and the rest of Andhra Pradesh
+
+Census 2011 has one Andhra Pradesh. After the split on 2 June 2014, Telangana (Census 2011
+districts 532-541, Adilabad to Khammam) and the rest of the state (542-554) have their own
+elections and their own 2014 loan waivers. `regions` in `configs/controls.yaml` lists the
+districts of each, and an entry with `region:` covers those districts only. Until 2014 both
+use the state entries.
+
+## State policy shocks
+
+Five shocks that hit one state and can move district credit on their own: the Andhra Pradesh
+microfinance ordinance (October 2010), which stopped most microfinance repayments in the
+state; the state's bifurcation (June 2014); the Kashmir unrest and curfews (July 2016);
+the revocation of Article 370 with months of communications shutdown (August 2019); and the
+ethnic violence in Manipur (May 2023). Nationwide shocks (demonetisation, GST, the COVID-19
+lockdown and the 2020 loan moratorium) hit every district in the same quarter, so the
+quarter fixed effects absorb them; they are not columns. Dates are marked `checked: false`.
+
 ## Known problems
 
 - The harmonised series stops in 2021 and VIIRS monthly starts in 2014, so no night-light
@@ -87,5 +120,8 @@ Telangana's 2014 waiver is under Andhra Pradesh, its Census 2011 state.
   `<name> (1).csv`); `make data` stops and names the files until only one copy is left.
 - VIIRS monthly radiance is noisy in the monsoon (cloud) months and has gaps over the
   northern hills in summer; the quarterly mean uses whichever months have data.
-- State elections and other state policy shocks (task list Phase 1 D, fourth item) are not
-  in yet.
+- `quarters_to_state_election` is null at the end of the window for states whose next
+  election (2027 or 2028) is not listed yet: 11 to 19% of their quarters. Add the dates
+  when the Election Commission announces them.
+- The shock list is a judgement of which state events were large enough; it is short on
+  purpose and is not exhaustive.
