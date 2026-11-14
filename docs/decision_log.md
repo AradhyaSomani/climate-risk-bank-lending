@@ -143,3 +143,20 @@ was used: pseudo impact quarters before each real one, and no district's quarter
   districts each, have MDEs of 12% to 13%. Pooled MDEs on log credit: floods 5.4%,
   cyclones 5.8%; on log deposits: floods 5.1%, cyclones 7.7%. A 5% effect is at the edge
   of what the design can see.
+
+## 2026-11-14 Pre-registration open items settled (Aradhya, sole owner)
+
+Aradhya now does both sides of the project, so the pre-registration has one signatory. The
+items left open in the draft are settled from the power check, before any post-event outcome
+(`docs/00_hypotheses.md`):
+
+- Series-break quarters are kept as data; quarters RBI published for no district are skipped
+  by the completeness rule. Chennai, Kerala and Fani stay in.
+- The primary p-value is the larger of the same-state randomization test and a placebo-date
+  test, because the randomization test alone rejects too often for the Odisha cyclones.
+- The power gate is judged on the largest of the three MDEs: four events pass, the minimum.
+- Metro and headquarters districts: kept, flagged, and dropped in robustness checks.
+- Kerala: the Sentinel-1 Otsu footprint (three treated districts) is primary; the seven PDNA
+  worst-hit districts are a robustness treated set.
+- Matching adds pre-period harmonised night lights, now that the controls have them. The
+  power check did not use them, so its MDEs are, if anything, slightly conservative.
