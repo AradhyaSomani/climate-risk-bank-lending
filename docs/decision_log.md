@@ -193,3 +193,19 @@ from the exposure tables, so every figure in it changes with the data.
   no quarterly data and are not scored.
 - Phase 3F keeps the ring difference-in-differences against far controls as its spillover
   estimate, with the `--ring 1` model comparison reported next to it.
+## 2026-11-14 Sector split from the annual BSR tables (Phase 1 C, 2 D)
+
+The only district table with credit by sector is the annual Table 5.9 / 3.9 (March 2002 to
+March 2026), which counts credit where it is used. It is kept as its own panel
+(`panel_credit_sector.parquet`, `basis = utilisation`) rather than mixed into the quarterly
+panel, which counts credit where it is booked.
+
+- Sectors: agriculture, industry, services (transport operators, professional services, trade,
+  finance), personal loans, other. No bank-group split exists at district level.
+- RBI's errors are fixed by rule or listed in `configs/rbi_annual.yaml`, never edited by hand
+  in the data: two years with the wrong unit, a copied block of six Haryana districts in 2006
+  (dropped), a mislabelled Andaman column in 2009, and 15 district-years whose occupations do
+  not match their total (`data/interim/rbi_annual_review.csv`).
+- `python-calamine` joins the dependencies: `xlrd` cannot open the 2014 file.
+- Report 1 gains a sector section: in March 2026, 24% of farm credit is in high flood tiers,
+  against 34% of all credit and 44% of services.

@@ -15,10 +15,12 @@ each hazard score version and type in C3 (`hazard_scores.parquet`), this compute
   regime (between the series breaks of configs/panel.yaml), and its jump across each break,
   so a trend that is only a break shows up as one.
 
+- `exposure_by_sector.parquet`: the tier table for the annual credit-by-sector panel
+  (cri.exposure.sector_panel: each March, by place of utilisation), when it has been built.
+
 The panel's district weights already come from the crosswalk (C1), so a district's amount is
-its share of every RBI label it belongs to. Bank groups and sectors are whatever the panel
-holds; the quarterly series is all banks and all sectors, and the sector split waits for the
-annual BSR reader.
+its share of every RBI label it belongs to. The quarterly series is all banks and all
+sectors; the sector split comes from the annual tables, which have no bank-group split.
 
 These are levels of credit across all districts, not outcomes around events, but they
 include post-event quarters; run it after the pre-registration is signed (`prereg-v1`).
@@ -42,7 +44,8 @@ log = logging.getLogger(__name__)
 KEYS = ["quarter_end", "bank_group", "measure", "sector"]
 HAZ = ["score_version", "hazard_type"]
 OUTPUTS = {"tier": "exposure_by_tier.parquet", "concentration": "exposure_concentration.parquet",
-           "state": "exposure_by_state.parquet", "trend": "exposure_trend.parquet"}
+           "state": "exposure_by_state.parquet", "trend": "exposure_trend.parquet",
+           "sector": "exposure_by_sector.parquet"}
 
 
 def _amounts(panel: pd.DataFrame) -> pd.DataFrame:
@@ -152,6 +155,13 @@ def build(out_dir: Path | None = None) -> list[Path]:
               "concentration": concentration(panel, scores, cfg["top_n"]),
               "state": by_state(panel, scores, master, high),
               "trend": trend(tier, breaks, high)}
+    sector_path = proc / "panel_credit_sector.parquet"
+    if sector_path.exists():
+        sp = pd.read_parquet(sector_path)
+        tables["sector"] = by_tier(sp, scores, master.district_id.nunique())
+    else:
+        log.info("no %s: run python -m cri.exposure.sector_panel for the sector split",
+                 sector_path.name)
     written = []
     for k, df in tables.items():
         path = out_dir / OUTPUTS[k]
