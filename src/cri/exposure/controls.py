@@ -206,6 +206,9 @@ def election_flags(assembly: list[dict], general: list[str], master: pd.DataFram
     # event list rather than in the grid
     nxt = ev[["district_id", "quarter_end"]].drop_duplicates().sort_values("quarter_end")
     nxt = nxt.rename(columns={"quarter_end": "next_results"})
+    # pandas 3 keeps microseconds where pandas 2 used nanoseconds, and merge_asof needs both
+    # keys in the same unit (an empty event list comes out in nanoseconds)
+    nxt["next_results"] = nxt.next_results.astype(grid.quarter_end.dtype)
     grid = pd.merge_asof(grid.sort_values("quarter_end"), nxt, by="district_id",
                          left_on="quarter_end", right_on="next_results",
                          direction="forward")
