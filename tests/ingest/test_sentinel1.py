@@ -52,3 +52,12 @@ def test_backscatter_without_a_box_is_refused(monkeypatch):
     monkeypatch.setitem(__import__("sys").modules, "ee", mock.MagicMock())
     with pytest.raises(SystemExit):
         s1.main(["--event", "FL-2015-CHENNAI", "--kind", "backscatter", "--bbox"])
+
+
+def test_slope_mask_uses_the_current_copernicus_dem(monkeypatch):
+    fake_ee = mock.MagicMock()
+    monkeypatch.setitem(__import__("sys").modules, "ee", fake_ee)
+    s1.flood_image(mock.MagicMock(), ("2018-04-01", "2018-05-28"), ("2018-08-14", "2018-08-24"))
+    assets = [c.args[0] for c in fake_ee.ImageCollection.call_args_list]
+    assert s1.DEM_ASSET == "COPERNICUS/DEM/GLO30_2024_1" and s1.DEM_ASSET in assets
+    assert "COPERNICUS/DEM/GLO30" not in assets  # deprecated in Earth Engine

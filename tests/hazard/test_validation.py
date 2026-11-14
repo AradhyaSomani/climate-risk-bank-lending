@@ -48,6 +48,18 @@ def test_gfd_vs_s1_compares_only_shared_events():
     assert out.iloc[0].hit_iou == 1.0 and out.iloc[0].n_districts == 3
 
 
+def test_gfd_vs_s1_repeats_over_well_mapped_districts():
+    flood = pd.DataFrame({
+        "event_id": ["E1"] * 6, "source": ["gfd"] * 3 + ["s1_otsu"] * 3,
+        "district_id": [1, 2, 3, 1, 2, 3],
+        "flooded_share": [0.0, 0.2, 0.5, 0.0, 0.3, 0.0],
+        "mapped_share": [1.0, 1.0, 1.0, 1.0, 1.0, 0.1],  # district 3 is at the export's edge
+    })
+    out = val.gfd_vs_s1(flood, min_mapped=0.5)
+    assert out.districts.tolist() == ["all", "mapped >= 50%"]
+    assert out.n_districts.tolist() == [3, 2] and out.iloc[1].hit_iou == 1.0
+
+
 def test_summary_states_the_comparison():
     oos = pd.DataFrame({
         "hazard": "flood", "built_from": "before 2012", "tested_on": "2012 on",
@@ -69,3 +81,17 @@ def test_summary_reports_emdat_when_present():
     assert "cyclone records (Spearman 0.60 across" in text and "0.10 to 0.20" in text
     assert "25 of its 211 flood records" in text and "(sections 4 and 5)" in text
     assert "sections 3 to 5" in "\n".join(val.summarise(pd.DataFrame()))
+
+
+def test_summary_reports_sentinel1_when_present():
+    s1 = pd.DataFrame({"event_id": ["FL-2015-CHENNAI"] * 2, "reference": ["gfd"] * 2,
+                       "s1_source": ["s1_otsu"] * 2, "districts": ["all", "mapped >= 50%"],
+                       "n_districts": [14, 7], "spearman": [0.12, 0.96],
+                       "hit_iou": [0.5, 0.83]})
+    em = pd.DataFrame({"hazard": ["flood", "cyclone"], "score_version": ["a", "a"],
+                       "spearman_records": [0.1, 0.6], "spearman_damage": [0.0, 0.4]})
+    text = "\n".join(val.summarise(pd.DataFrame(), em, None, s1))
+    assert "The NRSC atlas is pending on data (section 4)." in text
+    assert ("FL-2015-CHENNAI s1_otsu against gfd: Spearman 0.12, hit IoU 0.50 over 14 districts "
+            "(0.96 and 0.83 over the 7 with >= 50% mapped)") in text
+    assert "sections 3 and 4" in "\n".join(val.summarise(pd.DataFrame(), s1=s1))

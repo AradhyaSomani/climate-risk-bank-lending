@@ -75,3 +75,6 @@ validation:
   # Post Disaster Needs Assessment (Oct 2018, p. 13). Census 2011 codes.
   kerala_2018_worst: [594, 595, 596, 597, 598, 599, 590]  # Thrissur Ernakulam Idukki Kottayam Alappuzha Pathanamthitta Wayanad
   kerala_state: Kerala
+  # Sentinel-1 comparisons (section 5) are also reported over the districts an export covers
+  # for at least this share of their area; edge districts read as unflooded
+  s1_min_mapped_share: 0.5
